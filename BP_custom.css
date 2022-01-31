@@ -1,0 +1,31 @@
+.MAccordionContent {
+    height: auto!important;
+}
+.MRevealText-link.t-revealTextLink,
+.MRevealText-fade {
+    display: none;
+}
+
+.AdvertTile .AdvertTile-title,
+.AdvertTile .AdvertTile-price {
+    font-size: 20px;
+    line-height: 36px;
+    font-weight: 600;
+}
+.AdvertTile .AdvertTile-seller {
+    font-size: 16px;
+    line-height: 28px;
+}
+
+.btn.btn-ecommerce, .btn-ecommerce {
+
+    height: 50px;
+    padding: 0;
+    font-weight: 600;
+    font-size: 20px;
+    text-transform: uppercase;
+}
+
+.PromotionBanner-listItem-text {
+    border-right: none;
+}
