@@ -1,7 +1,6 @@
 
     //////BANNER ROTATION /////
-    
-    $(document).ready(function() {
+    document.addEventListener("DOMContentLoaded", function(event) {
         var slideIndex = 0;
         carousel();
         
