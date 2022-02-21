@@ -1,20 +1,5 @@
-
-    //////BANNER ROTATION /////
-    document.addEventListener("DOMContentLoaded", function(event) {
-        var slideIndex = 0;
-        carousel();
-        
-        function carousel() {
-            var i;
-            var x = document.getElementsByClassName("PromotionBanner-listItem-text");
-            for (i = 0; i < x.length; i++) {
-                x[i].style.display = "none";
-            }
-            slideIndex++;
-            if (slideIndex > x.length) {
-                slideIndex = 1
-            }
-            x[slideIndex - 1].style.display = "block";
-            setTimeout(carousel, 5000);
-        };
-    });
+$(document).ready(function() {
+    $('.CPageContainer').addClass('is-searchActiveMobile');
+    $('.CHeaderSearch').addClass('is-mobileOpenActive').addClass('is-openMobile');
+    $('.CHeaderSearch-inner input').attr('placeholder', 'Search for pet products');
+});
