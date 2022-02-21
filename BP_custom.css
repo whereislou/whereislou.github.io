@@ -1,31 +1,45 @@
-.MAccordionContent {
-    height: auto!important;
-}
-.MRevealText-link.t-revealTextLink,
-.MRevealText-fade {
-    display: none;
-}
 
-.AdvertTile .AdvertTile-title,
-.AdvertTile .AdvertTile-price {
-    font-size: 20px;
-    line-height: 36px;
-    font-weight: 600;
-}
-.AdvertTile .AdvertTile-seller {
-    font-size: 16px;
-    line-height: 28px;
-}
+@media screen and (max-width: 599px) {
+  .CPageContainer.is-searchActiveMobile .CLayout-contentOuter {
+    top : 111px;
+  }
 
-.btn.btn-ecommerce, .btn-ecommerce {
+  .CHeader .MainSearchField-label,
+  .CPreHeader .CPreHeader-searchIcon {
+    display : none;
+  }
 
-    height: 50px;
-    padding: 0;
-    font-weight: 600;
-    font-size: 20px;
-    text-transform: uppercase;
-}
+  .CHeader .MainSearch {
+    background : rgb(11, 75, 127);
+    display : flex;
+  }
 
-.PromotionBanner-listItem-text {
-    border-right: none;
+  .CHeader .MainSearchField {
+    padding : 0px;
+  }
+
+  .CHeader .MainSearchField .MAutoCompleteField input {
+    height : 40px;
+    padding : 20px;
+  }
+
+  .CHeader .MainSearch .MainSearch-buttonWrapper {
+    height : 30px;
+  }
+
+  .CHeader .is-openMobile .CHeaderSearch-outer
+   {
+    padding : 0px 0px 10px 0px;
+    background : rgb(11, 75, 127);
+  }
+
+  .CHeader .MainSearch .MainSearch-button {
+    line-height : 19px;
+  }
+
+  .CHeaderSearch .MainSearchField--keyword .MAutoCompleteField-suggestions {
+    top: 101px;
+    width: calc(100vw - 20px);
+  }
+
 }
