@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>US Stock Opportunity Report | Love to Dream</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1" integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" crossorigin="anonymous"></script>
+    <style>
+        :root {
+            --teal: #00B0BE; --teal-dark: #006375; --buff: #F6F5F3;
+            --dark: #2C2A2A; --bg: #f4f5f7; --card: #ffffff;
+            --gap: 16px; --rad: 10px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--dark); line-height: 1.5; }
+        .wrap { max-width: 1500px; margin: 0 auto; padding: var(--gap); }
+        .hdr { background: linear-gradient(135deg, var(--teal-dark), var(--teal)); color: white; padding: 24px 28px; border-radius: var(--rad); margin-bottom: var(--gap); }
+        .hdr h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+        .hdr p { font-size: 13px; opacity: 0.85; }
+        .filters { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 14px; }
+        .fg { display: flex; align-items: center; gap: 6px; }
+        .fg label { font-size: 12px; color: rgba(255,255,255,0.75); white-space: nowrap; }
+        .fg select, .fg input { padding: 6px 10px; border: 1px solid rgba(255,255,255,0.25); border-radius: 4px; background: rgba(255,255,255,0.12); color: white; font-size: 13px; outline: none; }
+        .fg select option { background: var(--teal-dark); color: white; }
+        .fg input::placeholder { color: rgba(255,255,255,0.5); }
+        .badge-filter { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+        .badge-chip { padding: 4px 10px; border-radius: 14px; font-size: 11px; font-weight: 600; cursor: pointer; border: 1px solid rgba(255,255,255,0.3); background: transparent; color: white; transition: all 0.15s; }
+        .badge-chip.active { background: white; color: var(--teal-dark); border-color: white; }
+        .badge-chip:hover { border-color: white; }
+        .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: var(--gap); margin-bottom: var(--gap); }
+        .kpi { background: var(--card); border-radius: var(--rad); padding: 18px 22px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+        .kpi-l { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 4px; }
+        .kpi-v { font-size: 26px; font-weight: 700; }
+        .kpi-s { font-size: 12px; color: #999; margin-top: 2px; }
+        .kpi-pct { font-size: 13px; font-weight: 600; color: var(--teal-dark); margin-top: 3px; }
+        .charts { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap); margin-bottom: var(--gap); }
+        .cbox { background: var(--card); border-radius: var(--rad); padding: 20px 24px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+        .cbox h3 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .cbox canvas { max-height: 360px; }
+        .chart-legend { display: flex; gap: 14px; margin-bottom: 12px; font-size: 11px; color: #666; }
+        .chart-legend span { display: flex; align-items: center; gap: 5px; }
+        .legend-dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+        .tbl-wrap { background: var(--card); border-radius: var(--rad); padding: 20px 24px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); overflow-x: auto; }
+        .tbl-wrap h3 { font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+        .tbl-info { font-size: 12px; color: #888; margin-bottom: 10px; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        thead th { text-align: left; padding: 10px 12px; border-bottom: 2px solid #e5e7eb; color: #666; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; white-space: nowrap; cursor: pointer; user-select: none; position: sticky; top: 0; background: white; z-index: 1; }
+        thead th:hover { color: var(--teal-dark); }
+        tbody td { padding: 10px 12px; border-bottom: 1px solid #f3f3f3; vertical-align: top; }
+        tbody tr:hover { background: #f9fafb; }
+        .sb { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+        .sb-oos { background: #fee2e2; color: #b91c1c; }
+        .sb-low { background: #fef3c7; color: #92400e; }
+        .sb-ok { background: #d1fae5; color: #065f46; }
+        .bb { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 10px; font-weight: 600; background: #e0f2fe; color: #0369a1; margin: 1px 2px; }
+        .cmt { max-width: 200px; font-size: 12px; color: #555; }
+        .cmt-l { font-size: 10px; color: #999; text-transform: uppercase; letter-spacing: 0.3px; }
+        .ftr { text-align: center; padding: 16px; font-size: 12px; color: #999; }
+        @media (max-width: 900px) { .charts { grid-template-columns: 1fr; } .kpis { grid-template-columns: repeat(2, 1fr); } }
+        @media print { body { background: white; } .filters { display: none; } }
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <div class="hdr">
+        <div>
+            <h1>US Stock Opportunity Report</h1>
+            <p>Variant-level: OOS at one location &middot; Bundles, both-OOS &amp; in-stock-both excluded &middot; Last 14 days GA4 &middot; 63 variants &middot; Generated 30 Mar 2026</p>
+        </div>
+        <div class="filters">
+            <div class="fg">
+                <label>Stock Status</label>
+                <select id="f-loc" onchange="db.apply()">
+                    <option value="any" selected>All OOS</option>
+                    <option value="chi-oos">Chicago OOS</option>
+                    <option value="riv-oos">Riverside OOS</option>
+                </select>
+            </div>
+            <div class="fg">
+                <label>Search</label>
+                <input type="text" id="f-search" style="width:200px" placeholder="SKU or product name..." oninput="db.apply()">
+            </div>
+            <div class="fg">
+                <label>Badges</label>
+                <div class="badge-filter" id="badge-filter"></div>
+            </div>
+        </div>
+    </div>
+
+    <section class="kpis">
+        <div class="kpi"><div class="kpi-l">OOS Variants</div><div class="kpi-v" id="k-total">0</div><div class="kpi-s" id="k-total-s"></div></div>
+        <div class="kpi"><div class="kpi-l">Product Views (14d)</div><div class="kpi-v" id="k-views">0</div><div class="kpi-pct" id="k-views-pct"></div><div class="kpi-s">% of all US GA4 product views</div></div>
+        <div class="kpi"><div class="kpi-l">Add-to-Carts</div><div class="kpi-v" id="k-atc">0</div><div class="kpi-pct" id="k-atc-pct"></div><div class="kpi-s">% of all US GA4 add-to-carts</div></div>
+        <div class="kpi"><div class="kpi-l">Product Revenue (14d)</div><div class="kpi-v" id="k-rev">$0</div><div class="kpi-pct" id="k-rev-pct"></div><div class="kpi-s">% of total Shopify revenue (14d)</div></div>
+        <div class="kpi"><div class="kpi-l">OOS Breakdown</div><div class="kpi-v" id="k-oos">0</div><div class="kpi-s" id="k-oos-s"></div></div>
+    </section>
+
+    <section class="charts">
+        <div class="cbox">
+            <h3>Top Products by Views</h3>
+            <div class="chart-legend">
+                <span><span class="legend-dot" style="background:#ef4444"></span> Chicago OOS</span>
+                <span><span class="legend-dot" style="background:#f59e0b"></span> Riverside OOS</span>
+            </div>
+            <canvas id="c-views"></canvas>
+        </div>
+        <div class="cbox">
+            <h3>Top Products by Revenue</h3>
+            <div class="chart-legend">
+                <span><span class="legend-dot" style="background:#ef4444"></span> Chicago OOS</span>
+                <span><span class="legend-dot" style="background:#f59e0b"></span> Riverside OOS</span>
+            </div>
+            <canvas id="c-rev"></canvas>
+        </div>
+    </section>
+
+    <section class="tbl-wrap">
+        <h3>Variant Detail</h3>
+        <div class="tbl-info" id="tbl-info">Click any column header to sort.</div>
+        <div id="tbl"></div>
+    </section>
+
+    <div class="ftr">Love to Dream &middot; US Stock Opportunity Report &middot; Generated March 17, 2026</div>
+</div>
+
+<script>
+var RAW = [{"Variant SKU": "L10 04 337 BUF NB", "Title": "Swaddle Up™ 1.0 TOG Organic Cotton Buff Lunar", "Chicago": 0, "Riverside": 118, "itemsViewed": 1734, "itemsAddedToCart": 61, "itemRevenue": 1404.15, "itemsPurchased": 37, "US_Status": "ONGOING SKUS", "Comments": "OK", "Conclusion": "Top up order", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L10 09 351 BLS NB", "Title": "Swaddle Up™ 1.0 TOG Viscose from Bamboo Blush Cherries", "Chicago": 0, "Riverside": 18, "itemsViewed": 1497, "itemsAddedToCart": 61, "itemRevenue": 1214.4, "itemsPurchased": 32, "US_Status": "ONGOING SKUS", "Comments": "OK", "Conclusion": "Top up order", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L10 01 326 CHL M", "Title": "Swaddle Up™ 1.0 TOG Cotton Charcoal Big Sky", "Chicago": 9, "Riverside": 0, "itemsViewed": 1284, "itemsAddedToCart": 68, "itemRevenue": 1252.35, "itemsPurchased": 33, "US_Status": "ONGOING SKUS", "Comments": "OK", "Conclusion": "", "Badges": "", "Chicago_OOS": false, "Riverside_OOS": true}, {"Variant SKU": "L20 04 337 BUF M", "Title": "Swaddle Up™ Transition Bag 1.0 TOG Organic Cotton Buff Lunar", "Chicago": 0, "Riverside": 654, "itemsViewed": 891, "itemsAddedToCart": 207, "itemRevenue": 9838.8, "itemsPurchased": 206, "US_Status": "ONGOING SKUS", "Comments": "OK", "Conclusion": "top up order", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L20 09 352 CRM M", "Title": "Swaddle Up™ Transition Bag 1.0 TOG Viscose from Bamboo Cream Lemons", "Chicago": 0, "Riverside": 455, "itemsViewed": 715, "itemsAddedToCart": 105, "itemRevenue": 4350.71, "itemsPurchased": 91, "US_Status": "ONGOING SKUS", "Comments": "OK", "Conclusion": "top up order", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L89 01 304 DNM 000", "Title": "Footless Romper Cotton Denim Blueberries", "Chicago": 0, "Riverside": 10, "itemsViewed": 520, "itemsAddedToCart": 24, "itemRevenue": 120.0, "itemsPurchased": 8, "US_Status": "Clearance", "Comments": "Clearance, we'll send now", "Conclusion": "Layers top up", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L89 01 299 LBL 0000", "Title": "Footless Romper Cotton Blue Eclipse", "Chicago": 0, "Riverside": 6, "itemsViewed": 395, "itemsAddedToCart": 3, "itemRevenue": 0, "itemsPurchased": 0, "US_Status": "Clearance", "Comments": "Clearance, we'll send now", "Conclusion": "Layers top up", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L89 01 299 OLV 0000", "Title": "Footless Romper Cotton Olive Eclipse", "Chicago": 0, "Riverside": 28, "itemsViewed": 391, "itemsAddedToCart": 3, "itemRevenue": 15.0, "itemsPurchased": 1, "US_Status": "Clearance", "Comments": "Clearance, we'll send now", "Conclusion": "Layers top up", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L10 28 266 OLV M", "Title": "Swaddle Up™ 3.5 TOG Cotton Olive Moonlight", "Chicago": 0, "Riverside": 549, "itemsViewed": 382, "itemsAddedToCart": 31, "itemRevenue": 385.0, "itemsPurchased": 11, "US_Status": "Clearance", "Comments": "Clearance, we'll send now", "Conclusion": "top up order", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L89 01 254 GRY 000", "Title": "Footless Romper Cotton Gray Daydream", "Chicago": 0, "Riverside": 75, "itemsViewed": 379, "itemsAddedToCart": 8, "itemRevenue": 75.0, "itemsPurchased": 5, "US_Status": "Clearance", "Comments": "Clearance, we'll send now", "Conclusion": "Layers top up", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L89 01 303 DPK 000", "Title": "Footless Romper Cotton Rose Bubbles", "Chicago": 0, "Riverside": 78, "itemsViewed": 375, "itemsAddedToCart": 3, "itemRevenue": 75.0, "itemsPurchased": 5, "US_Status": "Clearance", "Comments": "Clearance, we'll send now", "Conclusion": "Layers top up", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L89 01 247 WHT 0000", "Title": "Footless Romper Cotton White Dreamer", "Chicago": 0, "Riverside": 30, "itemsViewed": 362, "itemsAddedToCart": 1, "itemRevenue": 0, "itemsPurchased": 0, "US_Status": "Clearance", "Comments": "Clearance, we'll send now", "Conclusion": "Layers top up", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L89 01 299 DPK 0000", "Title": "Footless Romper Cotton Pink Eclipse", "Chicago": 0, "Riverside": 34, "itemsViewed": 358, "itemsAddedToCart": 4, "itemRevenue": 30.0, "itemsPurchased": 2, "US_Status": "Clearance", "Comments": "Clearance, we'll send now", "Conclusion": "Layers top up", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L89 25 001 OAT 00", "Title": "Footless Romper Merino Wool Oatmeal", "Chicago": 0, "Riverside": 85, "itemsViewed": 331, "itemsAddedToCart": 2, "itemRevenue": 180.0, "itemsPurchased": 4, "US_Status": "Clearance", "Comments": "Clearance, we'll send now", "Conclusion": "Layers top up", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L89 25 297 OLV 0000", "Title": "Footless Romper Merino Wool Olive Stripe", "Chicago": 0, "Riverside": 36, "itemsViewed": 331, "itemsAddedToCart": 1, "itemRevenue": 0, "itemsPurchased": 0, "US_Status": "Clearance", "Comments": "Clearance, we'll send now", "Conclusion": "Layers top up", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L10 28 266 WHT M", "Title": "Swaddle Up™ 3.5 TOG Cotton White Moonlight", "Chicago": 0, "Riverside": 638, "itemsViewed": 150, "itemsAddedToCart": 9, "itemRevenue": 210.0, "itemsPurchased": 6, "US_Status": "Clearance", "Comments": "Clearance, we'll send now", "Conclusion": "top up order", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L10 01 247 WHT S", "Title": "Swaddle Up™ 1.0 TOG Cotton White Dreamer", "Chicago": 0, "Riverside": 435, "itemsViewed": 122, "itemsAddedToCart": 254, "itemRevenue": 6531.0, "itemsPurchased": 188, "US_Status": "ONGOING SKUS", "Comments": "OK", "Conclusion": "Top up order", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L30 28 268 GRY 6-18M", "Title": "Sleep Bag Long Sleeve 3.5 TOG Cotton Gray South Pole", "Chicago": 0, "Riverside": 830, "itemsViewed": 102, "itemsAddedToCart": 7, "itemRevenue": 147.0, "itemsPurchased": 3, "US_Status": "Clearance", "Comments": "Clearance, we'll send now", "Conclusion": "top up order", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L87 01 002 GRY 0000", "Title": "Leggings Cotton Gray Stripe", "Chicago": 0, "Riverside": 89, "itemsViewed": 70, "itemsAddedToCart": 0, "itemRevenue": 0, "itemsPurchased": 0, "US_Status": "Clearance", "Comments": "Clearance, we'll send now", "Conclusion": "Layers top up", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L89 25 001 OAT 2", "Title": "Footless Romper Merino Wool Oatmeal", "Chicago": 0, "Riverside": 92, "itemsViewed": 36, "itemsAddedToCart": 2, "itemRevenue": 0, "itemsPurchased": 0, "US_Status": "Clearance", "Comments": "Clearance, we'll send now", "Conclusion": "Layers top up", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L89 25 001 OAT 1", "Title": "Footless Romper Merino Wool Oatmeal", "Chicago": 0, "Riverside": 163, "itemsViewed": 32, "itemsAddedToCart": 5, "itemRevenue": 270.0, "itemsPurchased": 6, "US_Status": "Clearance", "Comments": "Clearance, we'll send now", "Conclusion": "Layers top up", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L25 01 002 GRY L", "Title": "Swaddle Up™ Transition Suit 1.0 TOG Cotton Gray", "Chicago": 0, "Riverside": 21, "itemsViewed": 24, "itemsAddedToCart": 1, "itemRevenue": 47.95, "itemsPurchased": 1, "US_Status": "ONGOING SKUS", "Comments": "OK", "Conclusion": "we'll send to CHI when we receive in Riv", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L20 01 345 PDB L", "Title": "Swaddle Up™ Transition Bag 1.0 TOG Cotton Powder Blue Twinkle", "Chicago": 0, "Riverside": 305, "itemsViewed": 15, "itemsAddedToCart": 74, "itemRevenue": 3762.5, "itemsPurchased": 88, "US_Status": "ONGOING SKUS", "Comments": "OOS", "Conclusion": "top up order", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L89 01 304 DNM 6-9M(SF)", "Title": "Footless Romper Cotton Denim Blueberries", "Chicago": 0, "Riverside": 4, "itemsViewed": 14, "itemsAddedToCart": 28, "itemRevenue": 255.0, "itemsPurchased": 17, "US_Status": "Clearance", "Comments": "Clearance, we'll send now", "Conclusion": "Layers top up", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L89 25 001 OAT 0", "Title": "Footless Romper Merino Wool Oatmeal", "Chicago": 0, "Riverside": 86, "itemsViewed": 12, "itemsAddedToCart": 5, "itemRevenue": 0, "itemsPurchased": 0, "US_Status": "Clearance", "Comments": "Clearance, we'll send now", "Conclusion": "Layers top up", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L89 01 254 GRY 00", "Title": "Footless Romper Cotton Gray Daydream", "Chicago": 0, "Riverside": 216, "itemsViewed": 11, "itemsAddedToCart": 7, "itemRevenue": 135.0, "itemsPurchased": 9, "US_Status": "Clearance", "Comments": "Clearance, we'll send now", "Conclusion": "Layers top up", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L89 01 299 DPK 6-9M(SF)", "Title": "Footless Romper Cotton Pink Eclipse", "Chicago": 0, "Riverside": 85, "itemsViewed": 10, "itemsAddedToCart": 11, "itemRevenue": 90.0, "itemsPurchased": 6, "US_Status": "Clearance", "Comments": "Clearance, we'll send now", "Conclusion": "Layers top up", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L89 25 297 OLV 2", "Title": "Footless Romper Merino Wool Olive Stripe", "Chicago": 0, "Riverside": 53, "itemsViewed": 9, "itemsAddedToCart": 5, "itemRevenue": 90.0, "itemsPurchased": 2, "US_Status": "Clearance", "Comments": "Clearance, we'll send now", "Conclusion": "Layers top up", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L89 01 304 DNM 00", "Title": "Footless Romper Cotton Denim Blueberries", "Chicago": 0, "Riverside": 13, "itemsViewed": 9, "itemsAddedToCart": 18, "itemRevenue": 225.0, "itemsPurchased": 15, "US_Status": "Clearance", "Comments": "Clearance, we'll send now", "Conclusion": "Layers top up", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L89 25 297 OLV 1", "Title": "Footless Romper Merino Wool Olive Stripe", "Chicago": 0, "Riverside": 187, "itemsViewed": 7, "itemsAddedToCart": 3, "itemRevenue": 225.0, "itemsPurchased": 5, "US_Status": "Clearance", "Comments": "Clearance, we'll send now", "Conclusion": "Layers top up", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L89 01 299 OLV 000", "Title": "Footless Romper Cotton Olive Eclipse", "Chicago": 0, "Riverside": 64, "itemsViewed": 5, "itemsAddedToCart": 6, "itemRevenue": 45.0, "itemsPurchased": 3, "US_Status": "Clearance", "Comments": "Clearance, we'll send now", "Conclusion": "Layers top up", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L89 25 297 OLV 0", "Title": "Footless Romper Merino Wool Olive Stripe", "Chicago": 0, "Riverside": 127, "itemsViewed": 4, "itemsAddedToCart": 4, "itemRevenue": 90.0, "itemsPurchased": 2, "US_Status": "Clearance", "Comments": "Clearance, we'll send now", "Conclusion": "Layers top up", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L87 01 002 GRY 000", "Title": "Leggings Cotton Gray Stripe", "Chicago": 0, "Riverside": 183, "itemsViewed": 4, "itemsAddedToCart": 4, "itemRevenue": 36.0, "itemsPurchased": 3, "US_Status": "Clearance", "Comments": "Clearance, we'll send now", "Conclusion": "Layers top up", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L89 25 297 OLV 000", "Title": "Footless Romper Merino Wool Olive Stripe", "Chicago": 0, "Riverside": 113, "itemsViewed": 3, "itemsAddedToCart": 1, "itemRevenue": 45.0, "itemsPurchased": 1, "US_Status": "Clearance", "Comments": "Clearance, we'll send now", "Conclusion": "Layers top up", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L20 01 247 WHT L", "Title": "Swaddle Up™ Transition Bag 1.0 TOG Cotton White Dreamer", "Chicago": 0, "Riverside": 32, "itemsViewed": 3, "itemsAddedToCart": 3, "itemRevenue": 85.9, "itemsPurchased": 2, "US_Status": "ONGOING SKUS", "Comments": "OOS", "Conclusion": "top up order", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L89 01 247 WHT 00", "Title": "Footless Romper Cotton White Dreamer", "Chicago": 0, "Riverside": 187, "itemsViewed": 3, "itemsAddedToCart": 3, "itemRevenue": 90.0, "itemsPurchased": 6, "US_Status": "Clearance", "Comments": "Clearance, we'll send now", "Conclusion": "Layers top up", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L89 01 299 OLV 6-9M(SF)", "Title": "Footless Romper Cotton Olive Eclipse", "Chicago": 0, "Riverside": 73, "itemsViewed": 2, "itemsAddedToCart": 16, "itemRevenue": 180.0, "itemsPurchased": 12, "US_Status": "Clearance", "Comments": "Clearance, we'll send now", "Conclusion": "Layers top up", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L89 01 303 DPK 00", "Title": "Footless Romper Cotton Rose Bubbles", "Chicago": 0, "Riverside": 261, "itemsViewed": 2, "itemsAddedToCart": 1, "itemRevenue": 15.0, "itemsPurchased": 1, "US_Status": "Clearance", "Comments": "Clearance, we'll send now", "Conclusion": "Layers top up", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L89 01 299 LBL 000", "Title": "Footless Romper Cotton Blue Eclipse", "Chicago": 0, "Riverside": 80, "itemsViewed": 2, "itemsAddedToCart": 10, "itemRevenue": 90.0, "itemsPurchased": 6, "US_Status": "Clearance", "Comments": "Clearance, we'll send now", "Conclusion": "Layers top up", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L89 01 299 LBL 00", "Title": "Footless Romper Cotton Blue Eclipse", "Chicago": 0, "Riverside": 232, "itemsViewed": 2, "itemsAddedToCart": 6, "itemRevenue": 225.0, "itemsPurchased": 15, "US_Status": "Clearance", "Comments": "Clearance, we'll send now", "Conclusion": "Layers top up", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L89 01 247 WHT 000", "Title": "Footless Romper Cotton White Dreamer", "Chicago": 0, "Riverside": 116, "itemsViewed": 2, "itemsAddedToCart": 5, "itemRevenue": 0, "itemsPurchased": 0, "US_Status": "Clearance", "Comments": "Clearance, we'll send now", "Conclusion": "Layers top up", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L89 01 299 DPK 000", "Title": "Footless Romper Cotton Pink Eclipse", "Chicago": 0, "Riverside": 70, "itemsViewed": 2, "itemsAddedToCart": 7, "itemRevenue": 75.0, "itemsPurchased": 5, "US_Status": "Clearance", "Comments": "Clearance, we'll send now", "Conclusion": "Layers top up", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L89 01 299 OLV 00", "Title": "Footless Romper Cotton Olive Eclipse", "Chicago": 0, "Riverside": 185, "itemsViewed": 1, "itemsAddedToCart": 10, "itemRevenue": 105.0, "itemsPurchased": 7, "US_Status": "Clearance", "Comments": "Clearance, we'll send now", "Conclusion": "Layers top up", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L89 01 303 DPK 6-9M(SF)", "Title": "Footless Romper Cotton Rose Bubbles", "Chicago": 0, "Riverside": 139, "itemsViewed": 1, "itemsAddedToCart": 5, "itemRevenue": 45.0, "itemsPurchased": 3, "US_Status": "Clearance", "Comments": "Clearance, we'll send now", "Conclusion": "Layers top up", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L20 01 002 DPK XL", "Title": "Swaddle Up™ Transition Bag 1.0 TOG Cotton Dusty Pink", "Chicago": 0, "Riverside": 66, "itemsViewed": 0, "itemsAddedToCart": 6, "itemRevenue": 1920.0, "itemsPurchased": 64, "US_Status": "Clearance", "Comments": "OOS", "Conclusion": "top up order", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L89 25 297 OLV 00", "Title": "Footless Romper Merino Wool Olive Stripe", "Chicago": 0, "Riverside": 104, "itemsViewed": 0, "itemsAddedToCart": 2, "itemRevenue": 135.0, "itemsPurchased": 3, "US_Status": "Clearance", "Comments": "Clearance, we'll send now", "Conclusion": "Layers top up", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L12 01 247 WHT S", "Title": "Swaddle Up™ Hip Harness 1.0 TOG Cotton White Dreamer", "Chicago": 0, "Riverside": 13, "itemsViewed": 0, "itemsAddedToCart": 4, "itemRevenue": 1747.5, "itemsPurchased": 50, "US_Status": "ONGOING SKUS", "Comments": "OK", "Conclusion": "", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L30 28 268 GRY 18-36M", "Title": "Sleep Bag Long Sleeve 3.5 TOG Cotton Gray South Pole", "Chicago": 0, "Riverside": 506, "itemsViewed": 0, "itemsAddedToCart": 1, "itemRevenue": 294.0, "itemsPurchased": 6, "US_Status": "Clearance", "Comments": "Clearance, we'll send now", "Conclusion": "top up order", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L10 01 264 OCR M", "Title": "Swaddle Up™ Original 1.0 TOG Pear Print Ochre (Designer Collection)", "Chicago": 0, "Riverside": 1141, "itemsViewed": 0, "itemsAddedToCart": 0, "itemRevenue": 34.95, "itemsPurchased": 1, "US_Status": "ONGOING SKUS", "Comments": "Not for E-Com", "Conclusion": "Target exclusive", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L10 01 264 OCR S", "Title": "Swaddle Up™ Original 1.0 TOG Pear Print Ochre (Designer Collection)", "Chicago": 0, "Riverside": 12075, "itemsViewed": 0, "itemsAddedToCart": 0, "itemRevenue": 69.9, "itemsPurchased": 2, "US_Status": "ONGOING SKUS", "Comments": "Not for E-Com", "Conclusion": "Target exclusive", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L30 28 268 DPK 18-36M", "Title": "Sleep Bag Long Sleeve 3.5 TOG Cotton Pink South Pole", "Chicago": 0, "Riverside": 116, "itemsViewed": 0, "itemsAddedToCart": 2, "itemRevenue": 49.0, "itemsPurchased": 1, "US_Status": "Clearance", "Comments": "Clearance, we'll send now", "Conclusion": "top up order", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L40 19 247 WHT 12M", "Title": "Sleep Suit Short Sleeve 1.0 TOG Organic Cotton White Dreamer", "Chicago": 0, "Riverside": 492, "itemsViewed": 0, "itemsAddedToCart": 3, "itemRevenue": 2030.0, "itemsPurchased": 70, "US_Status": "Clearance", "Comments": "Clearance, we'll send now", "Conclusion": "top up order", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L40 22 254 GRY 24-36M", "Title": "Sleep Suit Sleeveless 0.2 TOG Organic Cotton Gray Daydream", "Chicago": 0, "Riverside": 538, "itemsViewed": 0, "itemsAddedToCart": 3, "itemRevenue": 1675.0, "itemsPurchased": 67, "US_Status": "Clearance", "Comments": "OK", "Conclusion": "Stock at Riverside is being offered to Offprice", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L40 22 254 GRY 12-24M", "Title": "Sleep Suit Sleeveless 0.2 TOG Organic Cotton Gray Daydream", "Chicago": 0, "Riverside": 391, "itemsViewed": 0, "itemsAddedToCart": 5, "itemRevenue": 2125.0, "itemsPurchased": 85, "US_Status": "Clearance", "Comments": "OK", "Conclusion": "Stock at Riverside is being offered to Offprice", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L10 01 247 WHT M", "Title": "Swaddle Up™ 1.0 TOG Cotton White Dreamer", "Chicago": 0, "Riverside": 1978, "itemsViewed": 0, "itemsAddedToCart": 1, "itemRevenue": 3075.6, "itemsPurchased": 88, "US_Status": "ONGOING SKUS", "Comments": "OK", "Conclusion": "", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L30 22 254 GRY 18-36M", "Title": "Sleep Bag Sleeveless 0.2 TOG Organic Cotton Gray Daydream", "Chicago": 0, "Riverside": 139, "itemsViewed": 0, "itemsAddedToCart": 6, "itemRevenue": 3275.0, "itemsPurchased": 131, "US_Status": "Clearance", "Comments": "Clearance, we'll send now", "Conclusion": "top up order", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L89 01 299 LBL 6-9M(SF)", "Title": "Footless Romper Cotton Blue Eclipse", "Chicago": 0, "Riverside": 97, "itemsViewed": 0, "itemsAddedToCart": 11, "itemRevenue": 195.0, "itemsPurchased": 13, "US_Status": "Clearance", "Comments": "Clearance, we'll send now", "Conclusion": "Layers top up", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L89 01 247 WHT 6-9M(SF)", "Title": "Footless Romper Cotton White Dreamer", "Chicago": 0, "Riverside": 151, "itemsViewed": 0, "itemsAddedToCart": 1, "itemRevenue": 90.0, "itemsPurchased": 6, "US_Status": "Clearance", "Comments": "Clearance, we'll send now", "Conclusion": "Layers top up", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L89 01 254 GRY 6-9M(SF)", "Title": "Footless Romper Cotton Gray Daydream", "Chicago": 0, "Riverside": 88, "itemsViewed": 0, "itemsAddedToCart": 1, "itemRevenue": 150.0, "itemsPurchased": 10, "US_Status": "Clearance", "Comments": "Clearance, we'll send now", "Conclusion": "Layers top up", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L89 01 299 DPK 00", "Title": "Footless Romper Cotton Pink Eclipse", "Chicago": 0, "Riverside": 229, "itemsViewed": 0, "itemsAddedToCart": 6, "itemRevenue": 105.0, "itemsPurchased": 7, "US_Status": "Clearance", "Comments": "Clearance, we'll send now", "Conclusion": "Layers top up", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L10 04 337 BUF M", "Title": "Swaddle Up™ 1.0 TOG Organic Cotton Buff Lunar", "Chicago": 0, "Riverside": 95, "itemsViewed": 0, "itemsAddedToCart": 1, "itemRevenue": 1703.96, "itemsPurchased": 47, "US_Status": "ONGOING SKUS", "Comments": "OK", "Conclusion": "Top up order", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L17 05 348 OLV M", "Title": "Swaddle Up™ Transition Bag 1.5 TOG Cotton Olive Twigs", "Chicago": 0, "Riverside": 156, "itemsViewed": 0, "itemsAddedToCart": 1, "itemRevenue": 4595.25, "itemsPurchased": 96, "US_Status": "ONGOING SKUS", "Comments": "OK", "Conclusion": "top up order", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}, {"Variant SKU": "L10 09 351 BLS M", "Title": "Swaddle Up™ 1.0 TOG Viscose from Bamboo Blush Cherries", "Chicago": 0, "Riverside": 495, "itemsViewed": 0, "itemsAddedToCart": 1, "itemRevenue": 1328.25, "itemsPurchased": 35, "US_Status": "ONGOING SKUS", "Comments": "OK", "Conclusion": "Top up order", "Badges": "", "Chicago_OOS": true, "Riverside_OOS": false}];
+var BADGES = [];
+var HAS_NONE = true;
+var GA4_TOTALS = {"views": 131556, "atc": 14240, "rev": 355418.89};
+var CORAL='#ef4444',AMBER='#f59e0b',GREEN='#10b981';
+
+function fmt(n,t){
+    if(t==='$'){if(n>=1e6)return'$'+(n/1e6).toFixed(1)+'M';if(n>=1e3)return'$'+(n/1e3).toFixed(1)+'K';return'$'+n.toFixed(0);}
+    if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return(n/1e3).toFixed(1)+'K';return n.toLocaleString();
+}
+function pct(n,total){return total>0?(n/total*100).toFixed(1)+'%':'0%';}
+function sb(q){
+    if(q===0)return'<span class="sb sb-oos">OOS</span>';
+    if(q<20)return'<span class="sb sb-low">'+q+'</span>';
+    return'<span class="sb sb-ok">'+q+'</span>';
+}
+
+var db={
+    data:RAW.slice(),activeBadges:[],charts:{},sortCol:'itemsViewed',sortDir:'desc',
+
+    init:function(){
+        var bf=document.getElementById('badge-filter');
+        var html='<span class="badge-chip" data-badge="all" onclick="db.toggleBadge(this)">All</span>';
+        if(HAS_NONE) html+='<span class="badge-chip active" data-badge="none" onclick="db.toggleBadge(this)">None</span>';
+        for(var i=0;i<BADGES.length;i++){
+            var isDefault = true;
+            html+='<span class="badge-chip'+(isDefault?' active':'')+'" data-badge="'+BADGES[i]+'" onclick="db.toggleBadge(this)">'+BADGES[i]+'</span>';
+        }
+        bf.innerHTML=html;
+        this.activeBadges = ['none'];
+        document.querySelector('.badge-chip[data-badge="all"]').classList.add('active');
+        for(var i=0;i<BADGES.length;i++){this.activeBadges.push(BADGES[i]);}
+        this.apply();
+    },
+
+    toggleBadge:function(el){
+        var badge=el.getAttribute('data-badge');
+        if(badge==='all'){
+            var chips=document.querySelectorAll('.badge-chip');
+            if(el.classList.contains('active')){
+                this.activeBadges=[];
+                for(var i=0;i<chips.length;i++)chips[i].classList.remove('active');
+            }else{
+                this.activeBadges=['none'];
+                for(var i=0;i<BADGES.length;i++)this.activeBadges.push(BADGES[i]);
+                for(var i=0;i<chips.length;i++)chips[i].classList.add('active');
+            }
+        }else{
+            el.classList.toggle('active');
+            var idx=this.activeBadges.indexOf(badge);
+            if(idx>-1)this.activeBadges.splice(idx,1);else this.activeBadges.push(badge);
+            var allChip=document.querySelector('.badge-chip[data-badge="all"]');
+            var allOn=this.activeBadges.indexOf('none')>-1;
+            for(var i=0;i<BADGES.length;i++){if(this.activeBadges.indexOf(BADGES[i])===-1){allOn=false;break;}}
+            if(allOn)allChip.classList.add('active');else allChip.classList.remove('active');
+        }
+        this.apply();
+    },
+
+    apply:function(){
+        var loc=document.getElementById('f-loc').value;
+        var q=document.getElementById('f-search').value.toLowerCase();
+        var ab=this.activeBadges;
+        this.data=RAW.filter(function(r){
+            if(loc==='chi-oos'&&!r.Chicago_OOS)return false;
+            if(loc==='riv-oos'&&!r.Riverside_OOS)return false;
+            if(q&&r.Title.toLowerCase().indexOf(q)===-1&&(r['Variant SKU']||'').toLowerCase().indexOf(q)===-1)return false;
+            if(ab.length>0){
+                var hasBadge=r.Badges&&r.Badges.trim().length>0;
+                var wantsNone=ab.indexOf('none')>-1;
+                var named=ab.filter(function(b){return b!=='none';});
+                if(!hasBadge){if(!wantsNone)return false;}
+                else{var m=false;for(var i=0;i<named.length;i++){if(r.Badges.indexOf(named[i])>-1){m=true;break;}}if(!m)return false;}
+            }else{return false;}
+            return true;
+        });
+        this.doSort();
+        this.kpis();
+        this.renderCharts();
+        this.table();
+    },
+
+    doSort:function(){
+        var c=this.sortCol,d=this.sortDir;
+        this.data.sort(function(a,b){
+            var av=a[c],bv=b[c];
+            if(typeof av==='string'){av=(av||'').toLowerCase();bv=(bv||'').toLowerCase();}
+            return d==='asc'?(av<bv?-1:(av>bv?1:0)):(av>bv?-1:(av<bv?1:0));
+        });
+    },
+
+    kpis:function(){
+        var d=this.data;
+        var seen={};var uV=0,uA=0,uR=0;
+        for(var i=0;i<d.length;i++){
+            var t=d[i].Title;
+            if(!seen[t]){seen[t]=true;uV+=d[i].itemsViewed;uA+=d[i].itemsAddedToCart;uR+=d[i].itemRevenue;}
+        }
+        var chi=d.filter(function(r){return r.Chicago_OOS;}).length;
+        var riv=d.filter(function(r){return r.Riverside_OOS;}).length;
+        document.getElementById('k-total').textContent=d.length;
+        document.getElementById('k-total-s').textContent=Object.keys(seen).length+' products';
+        document.getElementById('k-views').textContent=fmt(uV);
+        document.getElementById('k-views-pct').textContent=pct(uV,GA4_TOTALS.views)+' of total';
+        document.getElementById('k-atc').textContent=fmt(uA);
+        document.getElementById('k-atc-pct').textContent=pct(uA,GA4_TOTALS.atc)+' of total';
+        document.getElementById('k-rev').textContent=fmt(uR,'$');
+        document.getElementById('k-rev-pct').textContent=pct(uR,GA4_TOTALS.rev)+' of total';
+        document.getElementById('k-oos').textContent=chi+riv;
+        document.getElementById('k-oos-s').textContent='CHI: '+chi+' | RIV: '+riv;
+    },
+
+    renderCharts:function(){
+        var byP={};
+        for(var i=0;i<this.data.length;i++){
+            var r=this.data[i],t=r.Title;
+            if(!byP[t])byP[t]={title:t,views:r.itemsViewed,rev:r.itemRevenue,chiOos:false,rivOos:false};
+            if(r.Chicago_OOS)byP[t].chiOos=true;
+            if(r.Riverside_OOS)byP[t].rivOos=true;
+        }
+        var prods=Object.values(byP);
+        var topV=prods.slice().sort(function(a,b){return b.views-a.views;}).slice(0,12);
+        var topR=prods.slice().sort(function(a,b){return b.rev-a.rev;}).slice(0,12);
+
+        function lbl(p){return p.title.length>42?p.title.substring(0,40)+'...':p.title;}
+        function clr(p){return p.chiOos?CORAL:AMBER;}
+
+        var vL=topV.map(lbl),vD=topV.map(function(p){return p.views;}),vC=topV.map(clr);
+        var rL=topR.map(lbl),rD=topR.map(function(p){return p.rev;}),rC=topR.map(clr);
+
+        if(this.charts.v){
+            this.charts.v.data.labels=vL;this.charts.v.data.datasets[0].data=vD;this.charts.v.data.datasets[0].backgroundColor=vC;this.charts.v.update('none');
+            this.charts.r.data.labels=rL;this.charts.r.data.datasets[0].data=rD;this.charts.r.data.datasets[0].backgroundColor=rC;this.charts.r.update('none');
+        }else{
+            var mkO=function(ft){return{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,ticks:{callback:function(v){return fmt(v,ft);}}},y:{grid:{display:false},ticks:{font:{size:11}}}}};};
+            this.charts.v=new Chart(document.getElementById('c-views'),{type:'bar',data:{labels:vL,datasets:[{data:vD,backgroundColor:vC,borderRadius:4}]},options:mkO('')});
+            this.charts.r=new Chart(document.getElementById('c-rev'),{type:'bar',data:{labels:rL,datasets:[{data:rD,backgroundColor:rC,borderRadius:4}]},options:mkO('$')});
+        }
+    },
+
+    table:function(){
+        var self=this;
+        var cols=[
+            {f:'Variant SKU',l:'Variant SKU'},
+            {f:'Title',l:'Product'},
+            {f:'itemsViewed',l:'Views',t:'n'},
+            {f:'itemsAddedToCart',l:'ATC',t:'n'},
+            {f:'itemRevenue',l:'Revenue',t:'$'},
+            {f:'itemsPurchased',l:'Purchased',t:'n'},
+            {f:'Chicago',l:'Chicago',t:'s'},
+            {f:'Riverside',l:'Riverside',t:'s'},
+            {f:'Badges',l:'Badges',t:'b'},
+            {f:'_cmt',l:'Commentary',t:'c'}
+        ];
+        var h='<table><thead><tr>';
+        for(var i=0;i<cols.length;i++){
+            var ar=this.sortCol===cols[i].f?(this.sortDir==='asc'?' \u25B2':' \u25BC'):'';
+            h+='<th data-f="'+cols[i].f+'">'+cols[i].l+ar+'</th>';
+        }
+        h+='</tr></thead><tbody>';
+        for(var j=0;j<this.data.length;j++){
+            var r=this.data[j];
+            h+='<tr>';
+            for(var i=0;i<cols.length;i++){
+                var c=cols[i];
+                if(c.f==='Variant SKU')h+='<td style="white-space:nowrap;font-family:monospace;font-size:12px">'+r[c.f]+'</td>';
+                else if(c.f==='Title')h+='<td style="min-width:220px;font-weight:500">'+r.Title+'</td>';
+                else if(c.t==='s')h+='<td>'+sb(r[c.f])+'</td>';
+                else if(c.t==='$')h+='<td>'+fmt(r[c.f],'$')+'</td>';
+                else if(c.t==='b'){
+                    var bs=r.Badges&&r.Badges.trim()?r.Badges.split(', ').filter(function(x){return x;}).map(function(x){return'<span class="bb">'+x+'</span>';}).join(''):'<span style="color:#ccc">\u2014</span>';
+                    h+='<td>'+bs+'</td>';
+                }else if(c.t==='c'){
+                    var ps=[];
+                    if(r.US_Status)ps.push('<span class="cmt-l">Status:</span> '+r.US_Status);
+                    if(r.Comments)ps.push('<span class="cmt-l">Comment:</span> '+r.Comments);
+                    if(r.Conclusion)ps.push('<span class="cmt-l">Conclusion:</span> '+r.Conclusion);
+                    h+='<td class="cmt">'+(ps.length?ps.join('<br>'):'<span style="color:#ccc">\u2014</span>')+'</td>';
+                }else h+='<td>'+fmt(r[c.f])+'</td>';
+            }
+            h+='</tr>';
+        }
+        h+='</tbody></table>';
+        document.getElementById('tbl').innerHTML=h;
+        document.getElementById('tbl-info').textContent='Showing '+this.data.length+' variants \u00B7 Sorted by '+this.sortCol+(this.sortDir==='desc'?' (high \u2192 low)':' (low \u2192 high)');
+
+        var ths=document.querySelectorAll('thead th');
+        for(var t=0;t<ths.length;t++){
+            ths[t].addEventListener('click',function(){
+                var f=this.getAttribute('data-f');
+                if(f==='_cmt')return;
+                if(self.sortCol===f)self.sortDir=self.sortDir==='asc'?'desc':'asc';
+                else{self.sortCol=f;self.sortDir=f==='Title'||f==='Variant SKU'?'asc':'desc';}
+                self.doSort();self.table();
+            });
+        }
+    }
+};
+
+db.init();
+</script>
+</body>
+</html>
