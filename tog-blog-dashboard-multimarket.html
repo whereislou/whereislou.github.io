@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TOG Blog — Multi-Market Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#f8f7f4;--card:#fff;--border:#e8e6e1;--text:#1a1a18;--muted:#6b6a66;--light:#9c9a92;--blue:#2563eb;--blue-bg:#eff4ff;--teal:#0d9488;--amber:#d97706;--coral:#dc4a30;--purple:#7c3aed;--green:#16a34a;--mono:'JetBrains Mono',monospace;--sans:'DM Sans',system-ui,sans-serif}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);line-height:1.5;-webkit-font-smoothing:antialiased}
+.dash{max-width:1100px;margin:0 auto;padding:2rem 1.5rem 4rem}
+.header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.75rem;flex-wrap:wrap;gap:12px}
+.header-left h1{font-size:1.5rem;font-weight:600;letter-spacing:-.02em}
+.header-left p{color:var(--muted);font-size:.85rem;margin-top:4px}
+.badge{display:inline-block;background:var(--blue-bg);color:var(--blue);font-size:.7rem;font-weight:500;padding:3px 10px;border-radius:20px;margin-left:8px;vertical-align:middle;font-family:var(--mono)}
+.toggle{display:flex;gap:0;background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.toggle button{padding:10px 22px;font-family:var(--sans);font-size:.82rem;font-weight:500;border:none;cursor:pointer;background:transparent;color:var(--muted);transition:all .2s}
+.toggle button.active{background:var(--text);color:#fff}
+.toggle button:hover:not(.active){background:#f0efeb}
+.section-title{font-size:.72rem;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--light);margin-bottom:.75rem}
+.metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:1.75rem}
+.mc{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1rem 1.15rem}
+.mc .l{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:500}
+.mc .v{font-size:1.45rem;font-weight:600;margin-top:4px;letter-spacing:-.02em}
+.mc .s{font-size:.73rem;color:var(--muted);margin-top:2px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.25rem 1.5rem}
+.card-title{font-size:.85rem;font-weight:600;margin-bottom:1rem}
+.chart-wrap{position:relative;width:100%;height:280px}
+.funnel{display:flex;flex-direction:column;gap:6px}
+.funnel-step{display:flex;align-items:center;gap:10px}
+.funnel-step .fl{width:80px;font-size:.7rem;font-family:var(--mono);color:var(--muted);text-align:right;flex-shrink:0}
+.funnel-step .fb{height:34px;border-radius:6px;display:flex;align-items:center;padding:0 12px;justify-content:space-between;min-width:80px}
+.funnel-step .fb span{font-size:.75rem;font-weight:500;color:#fff;white-space:nowrap}
+.funnel-step .fd{font-size:.7rem;color:var(--coral);font-family:var(--mono);margin-left:6px;flex-shrink:0}
+table.pt{width:100%;border-collapse:collapse;font-size:.8rem}
+table.pt th{text-align:left;font-weight:500;color:var(--muted);font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;padding:6px 8px;border-bottom:1px solid var(--border)}
+table.pt td{padding:8px;border-bottom:1px solid var(--border)}
+table.pt tr:last-child td{border-bottom:none}
+table.pt .pn{max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+table.pt .num{text-align:right;font-family:var(--mono);font-size:.73rem}
+.tog-badge{display:inline-block;font-family:var(--mono);font-size:.63rem;font-weight:500;padding:2px 7px;border-radius:4px;margin-right:6px}
+.t02{background:#e0f2fe;color:#0369a1}.t10{background:#ecfdf5;color:#047857}
+.t15{background:#fef9c3;color:#a16207}.t25{background:#ffedd5;color:#c2410c}
+.t35{background:#fce7f3;color:#be185d}
+.callout{background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:.85rem 1.1rem;font-size:.8rem;color:#92400e;margin-bottom:1.5rem;line-height:1.6}
+.callout strong{font-weight:600}
+.footer{margin-top:2rem;padding-top:1rem;border-top:1px solid var(--border);font-size:.72rem;color:var(--light);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.meth{margin-top:10px;font-size:.7rem;color:var(--light)}
+@media(max-width:768px){.metrics{grid-template-columns:repeat(2,1fr)}.grid-2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="dash">
+  <div class="header">
+    <div class="header-left">
+      <h1>What is a TOG rating? <span class="badge">365-day view</span></h1>
+      <p id="subhead">/blogs/baby-sleep/what-is-a-tog-rating</p>
+    </div>
+    <div class="toggle" id="marketToggle">
+      <button class="active" data-m="AU">AU</button>
+      <button data-m="US">US</button>
+      <button data-m="UK">UK</button>
+    </div>
+  </div>
+
+  <div class="section-title">Overview</div>
+  <div class="metrics" id="metricsRow"></div>
+
+  <div id="calloutBox"></div>
+
+  <div class="grid-2">
+    <div class="card"><div class="card-title">Sessions by month</div><div class="chart-wrap"><canvas id="monthlyChart"></canvas></div></div>
+    <div class="card"><div class="card-title">Traffic source mix</div><div class="chart-wrap"><canvas id="sourceChart"></canvas></div></div>
+  </div>
+
+  <div class="section-title" style="margin-top:.5rem">Conversion funnel — unique users by event</div>
+  <div class="card" style="margin-bottom:1.5rem">
+    <div class="funnel" id="funnelBox"></div>
+    <div class="meth">Methodology: unique users (totalUsers) per eventName — not aggregate event counts.</div>
+  </div>
+
+  <div class="section-title">Top 10 products purchased</div>
+  <div class="card" style="margin-bottom:1.5rem;overflow-x:auto">
+    <table class="pt"><thead><tr><th>#</th><th>Product</th><th class="num">Units</th><th class="num">Revenue</th></tr></thead><tbody id="productBody"></tbody></table>
+  </div>
+
+  <div class="footer">
+    <span>Love to Dream — TOG Blog Multi-Market Dashboard</span>
+    <span id="footerMeta">GA4 | Generated Apr 2026</span>
+  </div>
+</div>
+
+<script>
+const D = {
+  AU: {
+    currency:'AUD', symbol:'$', propId:'277778103',
+    sessions:112911, users:79102, txns:431, revenue:46234,
+    channels:[
+      {n:'Organic Search',s:62770,u:45752,t:189,r:19308},
+      {n:'Cross-network',s:28152,u:21436,t:92,r:9576},
+      {n:'Unassigned',s:11625,u:8566,t:53,r:6140},
+      {n:'Direct',s:5254,u:3272,t:74,r:8414},
+      {n:'Referral',s:2689,u:2049,t:6,r:704},
+      {n:'Paid Search',s:963,u:468,t:5,r:655},
+      {n:'Paid Shopping',s:573,u:329,t:7,r:772},
+      {n:'Organic Social',s:391,u:318,t:2,r:385}
+    ],
+    monthly:{
+      labels:['Apr 25','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan 26','Feb','Mar','Apr*'],
+      sessions:[13884,12660,9101,6387,6871,10040,11030,9363,8581,8820,6879,7944,351],
+      txns:[87,52,44,21,26,46,31,28,36,24,16,19,1]
+    },
+    funnel:{pv:79102,vi:7060,atc:1388,pur:428},
+    products:[
+      {n:'Swaddle Up™ 2.5 TOG Cotton White Dreamer',tog:'2.5',u:44,r:2272},
+      {n:'Swaddle Up™ 1.5 TOG Cotton Olive North Star',tog:'1.5',u:33,r:1442},
+      {n:'Swaddle Up™ TB 2.5 TOG Cotton Olive Dreamer',tog:'2.5',u:20,r:1198},
+      {n:'Swaddle Up™ TB 2.5 TOG Cotton White Dreamer',tog:'2.5',u:17,r:1049},
+      {n:'Swaddle Up™ 2.5 TOG Cotton White Rainbow',tog:'2.5',u:17,r:995},
+      {n:'Sleep Suit LS 3.5 TOG Cotton Grey South Pole',tog:'3.5',u:14,r:972},
+      {n:'Swaddle Up™ 1.0 TOG Cotton White Cloud Bunnies',tog:'1.0',u:20,r:852},
+      {n:'Swaddle Up™ 1.0 TOG Cotton Grey',tog:'1.0',u:19,r:820},
+      {n:'Swaddle Up™ TB 3.5 TOG Cotton Grey South Pole',tog:'3.5',u:11,r:791},
+      {n:'Swaddle Up™ 1.5 TOG Cotton Charcoal Moon and Back',tog:'1.5',u:16,r:732}
+    ]
+  },
+  US: {
+    currency:'USD', symbol:'$', propId:'316451657',
+    sessions:77523, users:62190, txns:308, revenue:20328,
+    channels:[
+      {n:'Organic Search',s:45356,u:37009,t:74,r:5519},
+      {n:'Cross-network',s:19185,u:15208,t:91,r:5809},
+      {n:'Direct',s:5277,u:4063,t:65,r:4286},
+      {n:'Unassigned',s:5267,u:5049,t:45,r:2730},
+      {n:'Referral',s:1332,u:1150,t:5,r:253},
+      {n:'Paid Search',s:698,u:482,t:6,r:599},
+      {n:'Organic Social',s:449,u:354,t:20,r:964},
+      {n:'Affiliates',s:210,u:195,t:0,r:0}
+    ],
+    monthly:{
+      labels:['Apr 25','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan 26','Feb','Mar','Apr*'],
+      sessions:[5265,5901,6440,5635,5144,6015,11258,10170,6579,5935,4734,4306,141],
+      txns:[23,16,11,15,11,18,52,75,19,25,16,27,0]
+    },
+    funnel:{pv:62190,vi:5222,atc:1011,pur:305},
+    products:[
+      {n:'Swaddle Up™ 1.5 TOG Cotton Olive Twigs',tog:'1.5',u:50,r:1898},
+      {n:'Swaddle Up™ 1.5 TOG Cotton Oatmeal Twigs',tog:'1.5',u:48,r:1822},
+      {n:'Swaddle Up™ 2.5 TOG Cotton Olive Bees',tog:'2.5',u:21,r:902},
+      {n:'Swaddle Up™ TB 1.5 TOG Cotton Olive Twigs',tog:'1.5',u:15,r:719},
+      {n:'Swaddle Up™ 2.5 TOG Cotton Storm Blue Pebbles',tog:'2.5',u:16,r:687},
+      {n:'Swaddle Up™ TB 1.5 TOG Cotton Oatmeal Twigs',tog:'1.5',u:13,r:623},
+      {n:'Swaddle Up™ 1.0 TOG Cotton Gray',tog:'1.0',u:14,r:489},
+      {n:'Sleep Bag LS 2.5 TOG Cotton Storm Blue Pebbles',tog:'2.5',u:8,r:480},
+      {n:'Swaddle Up™ 1.0 TOG Organic Cotton Buff Lunar',tog:'1.0',u:11,r:417},
+      {n:'Swaddle Up™ 1.0 TOG Cotton Dusty Pink',tog:'1.0',u:12,r:411}
+    ]
+  },
+  UK: {
+    currency:'GBP', symbol:'£', propId:'275951419',
+    sessions:68306, users:45437, txns:322, revenue:16680,
+    channels:[
+      {n:'Organic Search',s:46724,u:34366,t:142,r:6902},
+      {n:'Unassigned',s:6407,u:4317,t:61,r:3582},
+      {n:'Cross-network',s:6143,u:4112,t:26,r:1157},
+      {n:'Direct',s:5719,u:2465,t:79,r:4227},
+      {n:'Referral',s:1735,u:1132,t:4,r:270},
+      {n:'Paid Search',s:1026,u:582,t:3,r:173},
+      {n:'Organic Social',s:257,u:175,t:5,r:280},
+      {n:'Paid Shopping',s:236,u:147,t:1,r:35}
+    ],
+    monthly:{
+      labels:['Apr 25','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan 26','Feb','Mar','Apr*'],
+      sessions:[5896,7671,7600,6099,6704,8619,6247,5294,3293,3830,3209,3683,161],
+      txns:[25,40,36,26,39,51,27,29,17,9,13,10,0]
+    },
+    funnel:{pv:45437,vi:4183,atc:851,pur:315},
+    products:[
+      {n:'Swaddle Up™ 2.5 TOG Cotton Olive Bees',tog:'2.5',u:28,r:892},
+      {n:'Swaddle Up™ 2.5 TOG Cotton Rose Pebbles',tog:'2.5',u:20,r:682},
+      {n:'Swaddle Up™ 1.5 TOG Cotton Oatmeal Twigs',tog:'1.5',u:20,r:657},
+      {n:'Swaddle Up™ 1.5 TOG Cotton Light Olive Mini Cloud',tog:'1.5',u:20,r:653},
+      {n:'Swaddle Up™ 1.0 TOG Cotton Dusty Pink',tog:'1.0',u:21,r:585},
+      {n:'Swaddle Up™ TB 1.5 TOG Cotton Light Olive Mini Cloud',tog:'1.5',u:15,r:516},
+      {n:'Swaddle Up™ 2.5 TOG Cotton Storm Blue Pebbles',tog:'2.5',u:13,r:436},
+      {n:'Swaddle Up™ 1.5 TOG Cotton White Mini Cloud',tog:'1.5',u:13,r:383},
+      {n:'Sleep Suit LS 1.5 TOG Cotton Olive Twigs',tog:'1.5',u:9,r:360},
+      {n:'Swaddle Up™ 1.0 TOG Cotton White Cloud Bunnies',tog:'1.0',u:12,r:360}
+    ]
+  }
+};
+
+const srcColors = ['#2563eb','#7c3aed','#9c9a92','#444442','#0d9488','#d97706','#dc4a30','#ec4899'];
+const togCls = t => ({'0.2':'t02','1.0':'t10','1.5':'t15','2.5':'t25','3.5':'t35'}[t]||'');
+
+let monthlyChart, sourceChart, current = 'AU';
+
+function fmt(n, sym) { return sym + n.toLocaleString(); }
+
+function render(m) {
+  current = m;
+  const d = D[m];
+  const cvr = (d.funnel.pur / d.funnel.pv * 100).toFixed(2);
+  const aov = d.txns > 0 ? Math.round(d.revenue / d.txns) : 0;
+  const viPct = (d.funnel.vi / d.funnel.pv * 100).toFixed(1);
+
+  document.getElementById('subhead').textContent =
+    `/blogs/baby-sleep/what-is-a-tog-rating — ${m} store (${d.currency}) — last 365 days`;
+
+  document.getElementById('metricsRow').innerHTML = `
+    <div class="mc"><div class="l">Sessions</div><div class="v">${d.sessions.toLocaleString()}</div><div class="s">~${Math.round(d.sessions/365)}/day avg</div></div>
+    <div class="mc"><div class="l">Unique users</div><div class="v">${d.users.toLocaleString()}</div><div class="s">landing on this page</div></div>
+    <div class="mc"><div class="l">Purchases</div><div class="v">${d.txns.toLocaleString()}</div><div class="s">${cvr}% true CVR</div></div>
+    <div class="mc"><div class="l">Revenue</div><div class="v">${fmt(d.revenue, d.symbol)}</div><div class="s">~${d.symbol}${aov} AOV</div></div>
+    <div class="mc"><div class="l">View item rate</div><div class="v">${viPct}%</div><div class="s">of visitors viewed a product</div></div>
+  `;
+
+  const lost = d.funnel.pv - d.funnel.vi;
+  document.getElementById('calloutBox').innerHTML = `<div class="callout"><strong>Key insight (${m}):</strong> ${((1 - d.funnel.vi/d.funnel.pv)*100).toFixed(1)}% of users never view a product after reading this blog. ${lost.toLocaleString()} visitors lost at the first funnel step. The blog→product bridge is the #1 opportunity.</div>`;
+
+  // Monthly chart
+  if (monthlyChart) monthlyChart.destroy();
+  monthlyChart = new Chart(document.getElementById('monthlyChart'), {
+    type: 'bar',
+    data: {
+      labels: d.monthly.labels,
+      datasets: [
+        {label:'Sessions', data:d.monthly.sessions, backgroundColor:'#2563eb', borderRadius:4, barPercentage:.55},
+        {label:'Txns', data:d.monthly.txns, backgroundColor:'#0d9488', borderRadius:4, barPercentage:.55, yAxisID:'y2'}
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:true,position:'bottom',labels:{boxWidth:10,boxHeight:10,padding:12,font:{size:11}}}},
+      scales:{
+        x:{grid:{display:false},ticks:{color:'#9c9a92',font:{size:10},maxRotation:45,autoSkip:false}},
+        y:{position:'left',grid:{color:'rgba(0,0,0,.06)'},ticks:{color:'#9c9a92',font:{size:10},callback:v=>v>=1000?(v/1000)+'k':v}},
+        y2:{position:'right',grid:{display:false},ticks:{color:'#9c9a92',font:{size:10}},min:0}
+      }
+    }
+  });
+
+  // Source chart
+  if (sourceChart) sourceChart.destroy();
+  const sl = d.channels.map(c=>c.n);
+  const sd = d.channels.map(c=>c.s);
+  const st = sd.reduce((a,b)=>a+b,0);
+  sourceChart = new Chart(document.getElementById('sourceChart'), {
+    type:'doughnut',
+    data:{labels:sl,datasets:[{data:sd,backgroundColor:srcColors.slice(0,sl.length),borderWidth:2,borderColor:'#fff',hoverOffset:6}]},
+    options:{
+      responsive:true,maintainAspectRatio:false,cutout:'60%',
+      plugins:{
+        legend:{display:true,position:'right',labels:{boxWidth:10,boxHeight:10,padding:6,font:{size:9.5},
+          generateLabels:c=>{const ds=c.data.datasets[0];return c.data.labels.map((l,i)=>({text:l+' '+Math.round(ds.data[i]/st*100)+'%',fillStyle:ds.backgroundColor[i],hidden:false,index:i}));}
+        }},
+        tooltip:{callbacks:{label:ctx=>ctx.label+': '+ctx.parsed.toLocaleString()+' ('+Math.round(ctx.parsed/st*100)+'%)'}}
+      }
+    }
+  });
+
+  // Funnel
+  const f = d.funnel;
+  const steps = [
+    {k:'page_view',v:f.pv,c:'var(--blue)',pct:'100%',w:'100%',drop:null},
+    {k:'view_item',v:f.vi,c:'var(--purple)',pct:(f.vi/f.pv*100).toFixed(1)+'%',w:Math.max(8,f.vi/f.pv*100)+'%',drop:((1-f.vi/f.pv)*100).toFixed(1)},
+    {k:'add_to_cart',v:f.atc,c:'var(--amber)',pct:(f.atc/f.pv*100).toFixed(1)+'%',w:Math.max(6,f.atc/f.pv*100*2.5)+'%',drop:((1-f.atc/f.vi)*100).toFixed(1)},
+    {k:'purchase',v:f.pur,c:'var(--teal)',pct:(f.pur/f.pv*100).toFixed(2)+'%',w:Math.max(5,f.pur/f.pv*100*4)+'%',drop:((1-f.pur/f.atc)*100).toFixed(1)}
+  ];
+  document.getElementById('funnelBox').innerHTML = steps.map(s=>`
+    <div class="funnel-step">
+      <div class="fl">${s.k}</div>
+      <div class="fb" style="width:${s.w};background:${s.c}"><span>${s.v.toLocaleString()}</span><span>${s.pct}</span></div>
+      ${s.drop ? `<div class="fd">&#9662; ${s.drop}% lost</div>` : ''}
+    </div>
+  `).join('');
+
+  // Products
+  document.getElementById('productBody').innerHTML = d.products.map((p,i)=>`
+    <tr>
+      <td style="color:var(--muted);font-family:var(--mono);font-size:.7rem">${i+1}</td>
+      <td class="pn"><span class="tog-badge ${togCls(p.tog)}">${p.tog} TOG</span>${p.n.replace(/Swaddle Up™ |Sleep Bag LS |Sleep Suit LS /g,'')}</td>
+      <td class="num">${p.u}</td>
+      <td class="num">${d.symbol}${p.r.toLocaleString()}</td>
+    </tr>
+  `).join('');
+
+  document.getElementById('footerMeta').textContent = `GA4 (${m} property ${d.propId}) | Generated Apr 2026`;
+
+  document.querySelectorAll('#marketToggle button').forEach(b=>{
+    b.classList.toggle('active', b.dataset.m === m);
+  });
+}
+
+Chart.defaults.font.family = "'DM Sans', sans-serif";
+document.querySelectorAll('#marketToggle button').forEach(b=>{
+  b.addEventListener('click', ()=> render(b.dataset.m));
+});
+render('AU');
+</script>
+</body>
+</html>
