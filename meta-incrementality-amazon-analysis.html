@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meta Incrementality Test — Amazon Revenue Impact (v2)</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1" integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" crossorigin="anonymous"></script>
+<style>
+:root {
+  --teal: #00B0BE; --teal-dark: #006375; --buff: #F6F5F3; --dark: #2C2A2A;
+  --silver: #707070; --silver-light: #EDEBE8; --green: #27AE60; --red: #E74C3C;
+  --gap: 16px; --radius: 10px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: var(--buff); color: var(--dark); line-height:1.5; padding:24px; }
+.container { max-width:1200px; margin:0 auto; }
+
+header { background: var(--dark); color: white; border-radius: var(--radius); padding: 24px 28px; margin-bottom: 20px; }
+header h1 { font-size: 1.4rem; font-weight: 700; }
+header p { font-size: 0.82rem; color: #B0D9D5; margin-top: 4px; }
+
+.verdict { background: white; border-left: 5px solid var(--teal); border-radius: var(--radius); padding: 18px 22px; margin-bottom: 20px; }
+.verdict h2 { font-size: 1rem; color: var(--teal-dark); margin-bottom: 6px; }
+.verdict p { font-size: 0.88rem; color: var(--silver); }
+.verdict .stat { font-weight: 700; color: var(--dark); }
+
+.kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--gap); margin-bottom: 20px; }
+.kpi { background: white; border-radius: var(--radius); padding: 18px 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+.kpi-label { font-size: 0.72rem; color: var(--silver); text-transform: uppercase; letter-spacing: 0.04em; }
+.kpi-value { font-size: 1.6rem; font-weight: 700; margin: 4px 0 2px; }
+.kpi-sub { font-size: 0.78rem; color: var(--silver); }
+.kpi-value.positive { color: var(--green); }
+.kpi-value.negative { color: var(--red); }
+.kpi-value.teal { color: var(--teal-dark); }
+
+.chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap); margin-bottom: 20px; }
+.chart-box { background: white; border-radius: var(--radius); padding: 18px 22px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+.chart-box h3 { font-size: 0.85rem; font-weight: 700; margin-bottom: 12px; color: var(--dark); }
+.chart-box canvas { max-height: 280px; }
+
+.did-table { width: 100%; border-collapse: collapse; font-size: 0.84rem; margin-top: 10px; }
+.did-table th { text-align: left; padding: 8px 12px; background: var(--buff); color: var(--silver); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1px solid var(--silver-light); }
+.did-table td { padding: 8px 12px; border-bottom: 1px solid var(--silver-light); }
+.did-table tr:last-child td { border-bottom: none; font-weight: 700; }
+.did-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+
+.state-section { margin-bottom: 20px; }
+.state-section h3 { font-size: 0.85rem; font-weight: 700; margin-bottom: 10px; }
+.state-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap); }
+.state-table-wrap { background: white; border-radius: var(--radius); box-shadow: 0 1px 4px rgba(0,0,0,0.06); overflow: hidden; }
+.state-table-wrap h4 { padding: 12px 16px; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: white; }
+.state-table-wrap h4.treat { background: var(--teal-dark); }
+.state-table-wrap h4.ctrl { background: var(--dark); }
+.state-tbl { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+.state-tbl th { text-align: left; padding: 7px 12px; background: var(--buff); color: var(--silver); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.03em; border-bottom: 1px solid var(--silver-light); }
+.state-tbl td { padding: 6px 12px; border-bottom: 1px solid #f5f5f4; }
+.state-tbl tr:hover { background: #fafaf9; }
+.state-tbl .num { text-align: right; font-variant-numeric: tabular-nums; }
+.state-tbl .pos { color: var(--green); font-weight: 600; }
+.state-tbl .neg { color: var(--red); }
+
+.methodology { background: white; border-radius: var(--radius); padding: 18px 22px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); margin-bottom: 20px; }
+.methodology h3 { font-size: 0.85rem; font-weight: 700; margin-bottom: 8px; }
+.methodology p, .methodology li { font-size: 0.82rem; color: var(--silver); }
+.methodology ul { margin-left: 18px; margin-top: 6px; }
+
+footer { text-align: center; font-size: 0.75rem; color: var(--silver); padding: 16px 0; }
+
+@media (max-width: 768px) {
+  .chart-row, .state-grid { grid-template-columns: 1fr; }
+  .kpi-row { grid-template-columns: repeat(2, 1fr); }
+}
+@media print {
+  body { background: white; }
+  .kpi, .chart-box, .state-table-wrap, .methodology, .verdict { box-shadow: none; border: 1px solid #eee; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <h1>Meta Incrementality Test — Amazon Revenue Impact</h1>
+  <p>Love to Dream US &middot; Test started Mar 17, 2026 &middot; Treatment = Meta increased spend (24 states) &middot; Control = BAU (23 states)</p>
+</header>
+
+<div class="verdict">
+  <h2>Bottom Line</h2>
+  <p>Treatment states (receiving incremental Meta spend) were essentially <span class="stat">flat (+0.0%)</span> in Amazon revenue, while control states declined <span class="stat">-3.0%</span> — a <span class="stat">+3.0pp</span> relative lift worth <span class="stat">$22,417</span>. The state-level difference is <span class="stat">statistically significant</span> (p = 0.026, Welch's t-test). Bootstrap 95% CI: <span class="stat">[+1.4pp, +15.0pp]</span> — entirely above zero (99.4% of samples positive).</p>
+</div>
+
+<section class="kpi-row">
+  <div class="kpi">
+    <div class="kpi-label">DiD Incremental Revenue</div>
+    <div class="kpi-value positive">+$22,417</div>
+    <div class="kpi-sub">Post-period (24 days)</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">DiD Relative Lift</div>
+    <div class="kpi-value teal">+3.0pp</div>
+    <div class="kpi-sub">Treatment vs control change</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">Welch's t-test</div>
+    <div class="kpi-value positive">p = 0.026</div>
+    <div class="kpi-sub">t = 2.3 (sig. at 95%)</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">Mann-Whitney U</div>
+    <div class="kpi-value ">p = 0.051</div>
+    <div class="kpi-sub">Non-parametric check</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">Treatment Revenue</div>
+    <div class="kpi-value">$747,456</div>
+    <div class="kpi-sub">+0.0% vs pre (23d)</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">Control Revenue</div>
+    <div class="kpi-value">$733,288</div>
+    <div class="kpi-sub">-3.0% vs pre (23d)</div>
+  </div>
+</section>
+
+<section class="chart-row">
+  <div class="chart-box">
+    <h3>Weekly Revenue — Treatment vs Control</h3>
+    <canvas id="weeklyChart"></canvas>
+  </div>
+  <div class="chart-box">
+    <h3>Difference-in-Differences Summary</h3>
+    <table class="did-table">
+      <thead><tr><th>Group</th><th class="num">Pre (23d)</th><th class="num">Post (24d)</th><th class="num">Change ($)</th><th class="num">Change (%)</th></tr></thead>
+      <tbody>
+        <tr><td>Treatment (24 states)</td><td class="num">$747,411</td><td class="num">$747,456</td><td class="num">$+45</td><td class="num">+0.0%</td></tr>
+        <tr><td>Control (23 states)</td><td class="num">$755,660</td><td class="num">$733,288</td><td class="num">$-22,372</td><td class="num">-3.0%</td></tr>
+        <tr><td>DiD Effect</td><td class="num">—</td><td class="num">—</td><td class="num">$+22,417</td><td class="num">+3.0pp</td></tr>
+      </tbody>
+    </table>
+    <div style="margin-top:14px;">
+      <table class="did-table">
+        <thead><tr><th>Metric</th><th class="num">Treatment</th><th class="num">Control</th></tr></thead>
+        <tbody>
+          <tr><td>State-level % change (mean)</td><td class="num">+4.0%</td><td class="num">-4.0%</td></tr>
+          <tr><td>State-level % change (median)</td><td class="num">-0.1%</td><td class="num">-5.0%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div style="margin-top:14px; padding:10px 14px; background:var(--buff); border-radius:6px; font-size:0.8rem; color:var(--silver);">
+      <strong style="color:var(--dark);">Bootstrap 95% CI:</strong> [+1.4pp, +15.0pp] &middot; 99.4% of 10K samples showed positive lift
+    </div>
+  </div>
+</section>
+
+<section class="chart-row">
+  <div class="chart-box">
+    <h3>State-Level % Change Distribution</h3>
+    <canvas id="distChart"></canvas>
+  </div>
+  <div class="chart-box">
+    <h3>Weekly Revenue Index (Pre-Period Avg = 100)</h3>
+    <canvas id="indexChart"></canvas>
+  </div>
+</section>
+
+<section class="state-section">
+  <h3>State-Level Detail</h3>
+  <div class="state-grid">
+    <div class="state-table-wrap">
+      <h4 class="treat">Treatment — 24 States (Meta Increased Spend)</h4>
+      <table class="state-tbl">
+        <thead><tr><th>State</th><th class="num">Pre ($)</th><th class="num">Post ($)</th><th class="num">Change (%)</th></tr></thead>
+        <tbody>
+          <tr><td>Texas</td><td class="num">$167,234</td><td class="num">$167,009</td><td class="num neg">-0.1%</td></tr>
+          <tr><td>North Carolina</td><td class="num">$63,830</td><td class="num">$57,542</td><td class="num neg">-9.9%</td></tr>
+          <tr><td>New Jersey</td><td class="num">$61,425</td><td class="num">$65,949</td><td class="num pos">+7.4%</td></tr>
+          <tr><td>Pennsylvania</td><td class="num">$54,909</td><td class="num">$55,330</td><td class="num pos">+0.8%</td></tr>
+          <tr><td>Washington</td><td class="num">$54,370</td><td class="num">$50,475</td><td class="num neg">-7.2%</td></tr>
+          <tr><td>Ohio</td><td class="num">$53,884</td><td class="num">$52,649</td><td class="num neg">-2.3%</td></tr>
+          <tr><td>Colorado</td><td class="num">$35,812</td><td class="num">$39,138</td><td class="num pos">+9.3%</td></tr>
+          <tr><td>Maryland</td><td class="num">$31,253</td><td class="num">$30,355</td><td class="num neg">-2.9%</td></tr>
+          <tr><td>Indiana</td><td class="num">$29,539</td><td class="num">$28,861</td><td class="num neg">-2.3%</td></tr>
+          <tr><td>South Carolina</td><td class="num">$28,641</td><td class="num">$27,863</td><td class="num neg">-2.7%</td></tr>
+          <tr><td>Utah</td><td class="num">$24,504</td><td class="num">$24,984</td><td class="num pos">+2.0%</td></tr>
+          <tr><td>Wisconsin</td><td class="num">$22,104</td><td class="num">$25,896</td><td class="num pos">+17.2%</td></tr>
+          <tr><td>Minnesota</td><td class="num">$20,136</td><td class="num">$23,097</td><td class="num pos">+14.7%</td></tr>
+          <tr><td>Oklahoma</td><td class="num">$19,342</td><td class="num">$17,536</td><td class="num neg">-9.3%</td></tr>
+          <tr><td>Alabama</td><td class="num">$19,337</td><td class="num">$18,768</td><td class="num neg">-2.9%</td></tr>
+          <tr><td>Kansas</td><td class="num">$13,596</td><td class="num">$14,111</td><td class="num pos">+3.8%</td></tr>
+          <tr><td>Nevada</td><td class="num">$13,095</td><td class="num">$13,144</td><td class="num pos">+0.4%</td></tr>
+          <tr><td>Arkansas</td><td class="num">$11,787</td><td class="num">$10,770</td><td class="num neg">-8.6%</td></tr>
+          <tr><td>New Mexico</td><td class="num">$6,090</td><td class="num">$5,623</td><td class="num neg">-7.7%</td></tr>
+          <tr><td>Delaware</td><td class="num">$5,745</td><td class="num">$5,371</td><td class="num neg">-6.5%</td></tr>
+          <tr><td>Maine</td><td class="num">$4,451</td><td class="num">$4,445</td><td class="num neg">-0.1%</td></tr>
+          <tr><td>Montana</td><td class="num">$2,594</td><td class="num">$3,571</td><td class="num pos">+37.7%</td></tr>
+          <tr><td>Wyoming</td><td class="num">$1,981</td><td class="num">$2,784</td><td class="num pos">+40.5%</td></tr>
+          <tr><td>Vermont</td><td class="num">$1,753</td><td class="num">$2,186</td><td class="num pos">+24.7%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="state-table-wrap">
+      <h4 class="ctrl">Control — 23 States (Business as Usual)</h4>
+      <table class="state-tbl">
+        <thead><tr><th>State</th><th class="num">Pre ($)</th><th class="num">Post ($)</th><th class="num">Change (%)</th></tr></thead>
+        <tbody>
+          <tr><td>Florida</td><td class="num">$129,024</td><td class="num">$128,299</td><td class="num neg">-0.6%</td></tr>
+          <tr><td>New York</td><td class="num">$109,100</td><td class="num">$108,576</td><td class="num neg">-0.5%</td></tr>
+          <tr><td>Illinois</td><td class="num">$62,505</td><td class="num">$62,943</td><td class="num pos">+0.7%</td></tr>
+          <tr><td>Georgia</td><td class="num">$52,969</td><td class="num">$50,742</td><td class="num neg">-4.2%</td></tr>
+          <tr><td>Michigan</td><td class="num">$47,893</td><td class="num">$48,522</td><td class="num pos">+1.3%</td></tr>
+          <tr><td>Massachusetts</td><td class="num">$46,437</td><td class="num">$46,507</td><td class="num pos">+0.2%</td></tr>
+          <tr><td>Virginia</td><td class="num">$44,955</td><td class="num">$45,714</td><td class="num pos">+1.7%</td></tr>
+          <tr><td>Tennessee</td><td class="num">$39,659</td><td class="num">$36,564</td><td class="num neg">-7.8%</td></tr>
+          <tr><td>Arizona</td><td class="num">$35,697</td><td class="num">$33,898</td><td class="num neg">-5.0%</td></tr>
+          <tr><td>Missouri</td><td class="num">$26,410</td><td class="num">$24,885</td><td class="num neg">-5.8%</td></tr>
+          <tr><td>Connecticut</td><td class="num">$25,014</td><td class="num">$20,009</td><td class="num neg">-20.0%</td></tr>
+          <tr><td>Kentucky</td><td class="num">$22,876</td><td class="num">$19,834</td><td class="num neg">-13.3%</td></tr>
+          <tr><td>Oregon</td><td class="num">$21,227</td><td class="num">$17,539</td><td class="num neg">-17.4%</td></tr>
+          <tr><td>Louisiana</td><td class="num">$19,606</td><td class="num">$17,956</td><td class="num neg">-8.4%</td></tr>
+          <tr><td>Iowa</td><td class="num">$12,233</td><td class="num">$14,741</td><td class="num pos">+20.5%</td></tr>
+          <tr><td>Idaho</td><td class="num">$10,727</td><td class="num">$9,415</td><td class="num neg">-12.2%</td></tr>
+          <tr><td>Mississippi</td><td class="num">$10,597</td><td class="num">$9,980</td><td class="num neg">-5.8%</td></tr>
+          <tr><td>Nebraska</td><td class="num">$9,150</td><td class="num">$9,665</td><td class="num pos">+5.6%</td></tr>
+          <tr><td>New Hampshire</td><td class="num">$9,068</td><td class="num">$7,421</td><td class="num neg">-18.2%</td></tr>
+          <tr><td>West Virginia</td><td class="num">$6,442</td><td class="num">$5,791</td><td class="num neg">-10.1%</td></tr>
+          <tr><td>Rhode Island</td><td class="num">$5,742</td><td class="num">$6,342</td><td class="num pos">+10.4%</td></tr>
+          <tr><td>South Dakota</td><td class="num">$5,235</td><td class="num">$4,592</td><td class="num neg">-12.3%</td></tr>
+          <tr><td>North Dakota</td><td class="num">$3,094</td><td class="num">$3,353</td><td class="num pos">+8.4%</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<div class="methodology">
+  <h3>Methodology & Caveats</h3>
+  <p>This analysis uses a <strong>difference-in-differences (DiD)</strong> approach comparing Amazon revenue in treatment states (receiving incremental Meta ad spend since Mar 17) against control states (business as usual).</p>
+  <ul>
+    <li><strong>Pre-period:</strong> Feb 22 – Mar 16, 2026 (23 days) &middot; <strong>Post-period:</strong> Mar 17 – Apr 09, 2026 (24 days)</li>
+    <li><strong>Statistical tests:</strong> Welch's t-test (p = 0.026) and Mann-Whitney U (p = 0.051) on state-level % changes</li>
+    <li><strong>Bootstrap:</strong> 10,000 resamples → 95% CI [+1.4pp, +15.0pp], 99.4% positive</li>
+    <li><strong>Parallel trends assumption:</strong> Check the weekly index chart — groups should track closely pre-test</li>
+    <li><strong>Excluded:</strong> California, Alaska, Hawaii, territories, and non-US orders</li>
+    <li><strong>Note:</strong> Pre-period is 23 days vs 24-day post-period (1-day mismatch due to test start timing)</li>
+    <li><strong>Limitations:</strong> Short post-period; seasonal patterns may differ by state; Amazon attribution to Meta is indirect (halo effect); small states have noisy signals</li>
+  </ul>
+</div>
+
+<footer>
+  Love to Dream &middot; Meta Incrementality Test &middot; Amazon Channel Analysis &middot; Updated Apr 9, 2026 (v2 — corrected pre-period)
+</footer>
+
+</div>
+
+<script>
+const weekLabels = ["2026-01-19", "2026-01-26", "2026-02-02", "2026-02-09", "2026-02-16", "2026-02-23", "2026-03-02", "2026-03-09", "2026-03-16", "2026-03-23", "2026-03-30", "2026-04-06"];
+const treatRev = [149745.94, 190742.8, 237497.6, 231141.69, 207218.76, 218970.85, 238676.7, 230967.22, 252915.05, 246626.52, 202371.62, 76651.28];
+const ctrlRev = [153986.94, 187612.94, 236919.91, 232544.67, 204919.25, 218853.22, 237971.85, 238409.22, 251137.29, 239884.96, 198529.57, 76314.15];
+const testStartIdx = weekLabels.findIndex(d => d >= '2026-03-17');
+
+const fmtLabels = weekLabels.map(d => {
+  const dt = new Date(d + 'T00:00:00');
+  return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+});
+
+const fmt = v => v >= 1000 ? '$' + (v/1000).toFixed(1) + 'K' : '$' + v.toFixed(0);
+
+function drawTestLine(chart) {
+  if (testStartIdx < 0) return;
+  const x = chart.scales.x.getPixelForValue(testStartIdx);
+  const yScale = chart.scales.y;
+  const ctx = chart.ctx;
+  ctx.save();
+  ctx.strokeStyle = '#00B0BE'; ctx.lineWidth = 2; ctx.setLineDash([6,4]);
+  ctx.beginPath(); ctx.moveTo(x, yScale.top); ctx.lineTo(x, yScale.bottom); ctx.stroke();
+  ctx.setLineDash([]); ctx.fillStyle = '#00B0BE'; ctx.font = '11px -apple-system, sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('Test Start', x, yScale.top - 6);
+  ctx.restore();
+}
+
+new Chart(document.getElementById('weeklyChart'), {
+  type: 'line',
+  data: {
+    labels: fmtLabels,
+    datasets: [
+      { label: 'Treatment', data: treatRev, borderColor: '#006375', backgroundColor: '#00637520', borderWidth: 2.5, tension: 0.3, pointRadius: 4, fill: false },
+      { label: 'Control', data: ctrlRev, borderColor: '#2C2A2A', backgroundColor: '#2C2A2A20', borderWidth: 2.5, tension: 0.3, pointRadius: 4, borderDash: [6,3], fill: false }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: { legend: { position: 'top', labels: { usePointStyle: true, padding: 16 } }, tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + fmt(ctx.parsed.y) } } },
+    scales: { x: { grid: { display: false } }, y: { beginAtZero: false, ticks: { callback: v => fmt(v) } } }
+  },
+  plugins: [{ afterDraw: drawTestLine }]
+});
+
+const treatPreAvg = treatRev.slice(0, testStartIdx).reduce((a,b) => a+b, 0) / testStartIdx;
+const ctrlPreAvg = ctrlRev.slice(0, testStartIdx).reduce((a,b) => a+b, 0) / testStartIdx;
+const treatIdx = treatRev.map(v => (v / treatPreAvg) * 100);
+const ctrlIdx = ctrlRev.map(v => (v / ctrlPreAvg) * 100);
+
+new Chart(document.getElementById('indexChart'), {
+  type: 'line',
+  data: {
+    labels: fmtLabels,
+    datasets: [
+      { label: 'Treatment Index', data: treatIdx, borderColor: '#006375', borderWidth: 2.5, tension: 0.3, pointRadius: 4, fill: false },
+      { label: 'Control Index', data: ctrlIdx, borderColor: '#2C2A2A', borderWidth: 2.5, tension: 0.3, pointRadius: 4, borderDash: [6,3], fill: false }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: { legend: { position: 'top', labels: { usePointStyle: true, padding: 16 } }, tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + ctx.parsed.y.toFixed(1) } } },
+    scales: { x: { grid: { display: false } }, y: { ticks: { callback: v => v.toFixed(0) } } }
+  },
+  plugins: [{
+    afterDraw(chart) {
+      drawTestLine(chart);
+      const y100 = chart.scales.y.getPixelForValue(100);
+      const ctx = chart.ctx;
+      ctx.save(); ctx.strokeStyle = '#EDEBE8'; ctx.lineWidth = 1; ctx.setLineDash([4,4]);
+      ctx.beginPath(); ctx.moveTo(chart.scales.x.left, y100); ctx.lineTo(chart.scales.x.right, y100); ctx.stroke();
+      ctx.restore();
+    }
+  }]
+});
+
+const treatStates = [{"state": "Texas", "group": "Treatment", "pre": 167233.92, "post": 167008.79, "change": -225.13, "changePct": -0.1}, {"state": "North Carolina", "group": "Treatment", "pre": 63829.86, "post": 57542.11, "change": -6287.75, "changePct": -9.9}, {"state": "New Jersey", "group": "Treatment", "pre": 61425.18, "post": 65949.19, "change": 4524.01, "changePct": 7.4}, {"state": "Pennsylvania", "group": "Treatment", "pre": 54909.35, "post": 55329.85, "change": 420.5, "changePct": 0.8}, {"state": "Washington", "group": "Treatment", "pre": 54370.34, "post": 50474.62, "change": -3895.72, "changePct": -7.2}, {"state": "Ohio", "group": "Treatment", "pre": 53884.02, "post": 52648.72, "change": -1235.3, "changePct": -2.3}, {"state": "Colorado", "group": "Treatment", "pre": 35811.89, "post": 39137.64, "change": 3325.75, "changePct": 9.3}, {"state": "Maryland", "group": "Treatment", "pre": 31252.65, "post": 30354.84, "change": -897.81, "changePct": -2.9}, {"state": "Indiana", "group": "Treatment", "pre": 29539.11, "post": 28861.07, "change": -678.04, "changePct": -2.3}, {"state": "South Carolina", "group": "Treatment", "pre": 28640.54, "post": 27862.84, "change": -777.7, "changePct": -2.7}, {"state": "Utah", "group": "Treatment", "pre": 24504.42, "post": 24983.84, "change": 479.42, "changePct": 2.0}, {"state": "Wisconsin", "group": "Treatment", "pre": 22104.39, "post": 25895.97, "change": 3791.58, "changePct": 17.2}, {"state": "Minnesota", "group": "Treatment", "pre": 20135.8, "post": 23097.38, "change": 2961.58, "changePct": 14.7}, {"state": "Oklahoma", "group": "Treatment", "pre": 19341.6, "post": 17535.72, "change": -1805.88, "changePct": -9.3}, {"state": "Alabama", "group": "Treatment", "pre": 19336.6, "post": 18768.1, "change": -568.5, "changePct": -2.9}, {"state": "Kansas", "group": "Treatment", "pre": 13595.59, "post": 14110.54, "change": 514.95, "changePct": 3.8}, {"state": "Nevada", "group": "Treatment", "pre": 13095.31, "post": 13144.08, "change": 48.77, "changePct": 0.4}, {"state": "Arkansas", "group": "Treatment", "pre": 11786.55, "post": 10770.02, "change": -1016.53, "changePct": -8.6}, {"state": "New Mexico", "group": "Treatment", "pre": 6089.77, "post": 5623.25, "change": -466.52, "changePct": -7.7}, {"state": "Delaware", "group": "Treatment", "pre": 5745.13, "post": 5370.54, "change": -374.59, "changePct": -6.5}, {"state": "Maine", "group": "Treatment", "pre": 4450.99, "post": 4445.16, "change": -5.83, "changePct": -0.1}, {"state": "Montana", "group": "Treatment", "pre": 2593.56, "post": 3571.0, "change": 977.44, "changePct": 37.7}, {"state": "Wyoming", "group": "Treatment", "pre": 1981.46, "post": 2784.26, "change": 802.8, "changePct": 40.5}, {"state": "Vermont", "group": "Treatment", "pre": 1752.65, "post": 2185.97, "change": 433.32, "changePct": 24.7}];
+const ctrlStates = [{"state": "Florida", "group": "Control", "pre": 129023.75, "post": 128298.79, "change": -724.96, "changePct": -0.6}, {"state": "New York", "group": "Control", "pre": 109099.66, "post": 108576.16, "change": -523.5, "changePct": -0.5}, {"state": "Illinois", "group": "Control", "pre": 62505.39, "post": 62943.14, "change": 437.75, "changePct": 0.7}, {"state": "Georgia", "group": "Control", "pre": 52968.98, "post": 50742.08, "change": -2226.9, "changePct": -4.2}, {"state": "Michigan", "group": "Control", "pre": 47892.76, "post": 48521.62, "change": 628.86, "changePct": 1.3}, {"state": "Massachusetts", "group": "Control", "pre": 46437.31, "post": 46507.01, "change": 69.7, "changePct": 0.2}, {"state": "Virginia", "group": "Control", "pre": 44955.44, "post": 45713.81, "change": 758.37, "changePct": 1.7}, {"state": "Tennessee", "group": "Control", "pre": 39658.93, "post": 36563.54, "change": -3095.39, "changePct": -7.8}, {"state": "Arizona", "group": "Control", "pre": 35697.32, "post": 33898.44, "change": -1798.88, "changePct": -5.0}, {"state": "Missouri", "group": "Control", "pre": 26409.59, "post": 24884.75, "change": -1524.84, "changePct": -5.8}, {"state": "Connecticut", "group": "Control", "pre": 25013.54, "post": 20008.95, "change": -5004.59, "changePct": -20.0}, {"state": "Kentucky", "group": "Control", "pre": 22876.09, "post": 19833.81, "change": -3042.28, "changePct": -13.3}, {"state": "Oregon", "group": "Control", "pre": 21226.9, "post": 17538.95, "change": -3687.95, "changePct": -17.4}, {"state": "Louisiana", "group": "Control", "pre": 19605.89, "post": 17956.4, "change": -1649.49, "changePct": -8.4}, {"state": "Iowa", "group": "Control", "pre": 12232.54, "post": 14740.7, "change": 2508.16, "changePct": 20.5}, {"state": "Idaho", "group": "Control", "pre": 10726.52, "post": 9415.2, "change": -1311.32, "changePct": -12.2}, {"state": "Mississippi", "group": "Control", "pre": 10597.4, "post": 9980.23, "change": -617.17, "changePct": -5.8}, {"state": "Nebraska", "group": "Control", "pre": 9149.72, "post": 9664.7, "change": 514.98, "changePct": 5.6}, {"state": "New Hampshire", "group": "Control", "pre": 9068.49, "post": 7420.96, "change": -1647.53, "changePct": -18.2}, {"state": "West Virginia", "group": "Control", "pre": 6442.17, "post": 5791.03, "change": -651.14, "changePct": -10.1}, {"state": "Rhode Island", "group": "Control", "pre": 5742.32, "post": 6342.18, "change": 599.86, "changePct": 10.4}, {"state": "South Dakota", "group": "Control", "pre": 5234.51, "post": 4591.61, "change": -642.9, "changePct": -12.3}, {"state": "North Dakota", "group": "Control", "pre": 3094.38, "post": 3353.46, "change": 259.08, "changePct": 8.4}];
+
+const allChanges = [...treatStates.map(s=>s.changePct), ...ctrlStates.map(s=>s.changePct)];
+const binMin = Math.floor(Math.min(...allChanges) / 10) * 10;
+const binMax = Math.ceil(Math.max(...allChanges) / 10) * 10;
+const nBins = 10;
+const binStep = (binMax - binMin) / nBins;
+const binLabels = []; const treatHist = Array(nBins).fill(0); const ctrlHist = Array(nBins).fill(0);
+for (let i = 0; i < nBins; i++) {
+  const lo = binMin + i * binStep, hi = lo + binStep;
+  binLabels.push(lo.toFixed(0) + '%');
+  treatStates.forEach(s => { if (s.changePct >= lo && (s.changePct < hi || i === nBins-1)) treatHist[i]++; });
+  ctrlStates.forEach(s => { if (s.changePct >= lo && (s.changePct < hi || i === nBins-1)) ctrlHist[i]++; });
+}
+
+new Chart(document.getElementById('distChart'), {
+  type: 'bar',
+  data: {
+    labels: binLabels,
+    datasets: [
+      { label: 'Treatment', data: treatHist, backgroundColor: '#006375AA', borderColor: '#006375', borderWidth: 1, borderRadius: 3 },
+      { label: 'Control', data: ctrlHist, backgroundColor: '#2C2A2A77', borderColor: '#2C2A2A', borderWidth: 1, borderRadius: 3 }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'top', labels: { usePointStyle: true, padding: 16 } } },
+    scales: { x: { grid: { display: false }, title: { display: true, text: 'Revenue Change (%)' } }, y: { beginAtZero: true, ticks: { stepSize: 1 }, title: { display: true, text: 'Number of States' } } }
+  }
+});
+</script>
+</body>
+</html>
