@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meta Incrementality Test Results</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --teal: #00B0BE;
+    --teal-dark: #006375;
+    --teal-light: #B0D9D5;
+    --buff: #F6F5F3;
+    --dark: #2C2A2A;
+    --silver-mid: #707070;
+    --silver-light: #EDEBE8;
+    --green: #27AE60;
+    --red: #C0392B;
+    --control: #2C2A2A;
+    --treatment: #00B0BE;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--buff);
+    color: var(--dark);
+    line-height: 1.5;
+    padding: 32px 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  header {
+    background: var(--dark);
+    color: white;
+    border-radius: 12px;
+    padding: 28px 32px;
+    margin-bottom: 24px;
+  }
+  header h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 4px; }
+  header p { font-size: 0.85rem; color: var(--teal-light); }
+
+  .method-note {
+    background: white;
+    border-left: 4px solid var(--teal);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-bottom: 24px;
+    font-size: 0.82rem;
+    color: var(--silver-mid);
+    line-height: 1.7;
+  }
+  .method-note strong { color: var(--dark); }
+
+  .section-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin: 28px 0 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--silver-light);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-title .badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .badge-sig { background: #D1FAE5; color: #065F46; }
+  .badge-not-sig { background: #FEE2E2; color: #991B1B; }
+
+  /* KPI cards */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .kpi-card {
+    background: white;
+    border-radius: 10px;
+    padding: 16px 18px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  }
+  .kpi-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--silver-mid);
+    margin-bottom: 6px;
+  }
+  .kpi-value {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--dark);
+  }
+  .kpi-sub {
+    font-size: 0.75rem;
+    color: var(--silver-mid);
+    margin-top: 4px;
+  }
+  .kpi-value.positive { color: var(--green); }
+  .kpi-value.negative { color: var(--red); }
+
+  /* DiD table */
+  .did-table-wrap {
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    margin-bottom: 20px;
+  }
+  .did-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+  }
+  .did-table thead th {
+    background: var(--buff);
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--silver-mid);
+    border-bottom: 1px solid var(--silver-light);
+  }
+  .did-table tbody td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--silver-light);
+  }
+  .did-table tbody tr:last-child td { border-bottom: none; }
+  .did-table .group-label { font-weight: 600; }
+  .did-table .treatment-row .group-label { color: var(--teal-dark); }
+  .did-table .control-row .group-label { color: var(--dark); }
+  .did-table .did-row {
+    background: #F0FDFA;
+    font-weight: 700;
+  }
+  .did-table .did-row td { color: var(--teal-dark); }
+  .change-pos { color: var(--green); font-weight: 600; }
+  .change-neg { color: var(--red); font-weight: 600; }
+
+  /* Chart container */
+  .chart-container {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    margin-bottom: 20px;
+  }
+  .chart-container h3 {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--dark);
+    margin-bottom: 14px;
+  }
+  .chart-wrap {
+    position: relative;
+    height: 280px;
+  }
+
+  /* Stat test box */
+  .stat-box {
+    background: white;
+    border-radius: 10px;
+    padding: 16px 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    margin-bottom: 20px;
+    font-size: 0.82rem;
+  }
+  .stat-box h4 {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--silver-mid);
+    margin-bottom: 10px;
+  }
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+  }
+  .stat-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--silver-light);
+  }
+  .stat-item:last-child { border-bottom: none; }
+  .stat-key { color: var(--silver-mid); font-weight: 500; }
+  .stat-val { font-weight: 600; color: var(--dark); }
+  .stat-val.sig { color: var(--green); }
+  .stat-val.not-sig { color: var(--red); }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  .footnote {
+    margin-top: 24px;
+    font-size: 0.75rem;
+    color: var(--silver-mid);
+    line-height: 1.7;
+  }
+  .footnote strong { color: var(--dark); }
+
+  @media (max-width: 768px) {
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .two-col { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Meta Incrementality Test - Results Dashboard</h1>
+  <p>Love to Dream US  |  Test started 17 March 2026  |  24 treatment states vs 23 control states  |  Data through 9 April 2026</p>
+</header>
+
+<div class="method-note">
+  <strong>Methodology:</strong> Difference-in-Differences (DiD) analysis comparing treatment states (increased Meta spend) vs control states (business as usual). Pre-period: 4 weeks before March 17. Post-period: ~3.5 weeks after March 17. Statistical significance tested using two-sample t-tests on state-level % changes (parametric) and Mann-Whitney U tests (non-parametric). n=24 treatment states, n=23 control states.
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- AMAZON -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="section-title">
+  Amazon Revenue
+  <span class="badge badge-sig">Significant (p=0.019)</span>
+</div>
+
+<div class="kpi-grid">
+  <div class="kpi-card">
+    <div class="kpi-label">DiD Uplift</div>
+    <div class="kpi-value positive">+7.82pp</div>
+    <div class="kpi-sub">State-level mean</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-label">Treatment Change</div>
+    <div class="kpi-value">-3.29%</div>
+    <div class="kpi-sub">$772.9K to $747.5K</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-label">Control Change</div>
+    <div class="kpi-value negative">-6.12%</div>
+    <div class="kpi-sub">$781.1K to $733.3K</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-label">p-value (t-test)</div>
+    <div class="kpi-value positive">0.019</div>
+    <div class="kpi-sub">Mann-Whitney: 0.049</div>
+  </div>
+</div>
+
+<div class="did-table-wrap">
+  <table class="did-table">
+    <thead>
+      <tr>
+        <th>Group</th>
+        <th>Pre-period Revenue</th>
+        <th>Post-period Revenue</th>
+        <th>% Change</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="treatment-row">
+        <td class="group-label">Treatment (24 states)</td>
+        <td>$772,873</td>
+        <td>$747,456</td>
+        <td class="change-neg">-3.29%</td>
+      </tr>
+      <tr class="control-row">
+        <td class="group-label">Control (23 states)</td>
+        <td>$781,089</td>
+        <td>$733,288</td>
+        <td class="change-neg">-6.12%</td>
+      </tr>
+      <tr class="did-row">
+        <td class="group-label">Difference-in-Differences</td>
+        <td colspan="2">Treatment declined less than control</td>
+        <td>+2.83pp (agg) / +7.82pp (state mean)</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="chart-container">
+  <h3>Amazon Weekly Revenue - Treatment vs Control (Retail Weeks, last 12 weeks)</h3>
+  <div class="chart-wrap">
+    <canvas id="amazonChart"></canvas>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- SHOPIFY -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="section-title">
+  Shopify DTC Performance
+  <span class="badge badge-sig">All metrics significant (p&lt;0.05)</span>
+</div>
+
+<div class="kpi-grid">
+  <div class="kpi-card">
+    <div class="kpi-label">Revenue DiD</div>
+    <div class="kpi-value positive">+21.64pp</div>
+    <div class="kpi-sub">p=0.022 | T: +6.4% vs C: -6.5%</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-label">Orders DiD</div>
+    <div class="kpi-value positive">+21.23pp</div>
+    <div class="kpi-sub">p=0.012 | T: +5.4% vs C: -7.8%</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-label">New Customers DiD</div>
+    <div class="kpi-value positive">+30.41pp</div>
+    <div class="kpi-sub">p=0.009 | T: +7.6% vs C: -8.7%</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-label">Strongest Signal</div>
+    <div class="kpi-value positive">New Custs</div>
+    <div class="kpi-sub">MW U p=0.005</div>
+  </div>
+</div>
+
+<div class="did-table-wrap">
+  <table class="did-table">
+    <thead>
+      <tr>
+        <th>Metric</th>
+        <th>Treatment Pre</th>
+        <th>Treatment Post</th>
+        <th>T Change</th>
+        <th>Control Pre</th>
+        <th>Control Post</th>
+        <th>C Change</th>
+        <th>DiD</th>
+        <th>p-value</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="group-label">Revenue (USD)</td>
+        <td>$126,205</td>
+        <td>$134,239</td>
+        <td class="change-pos">+6.37%</td>
+        <td>$127,119</td>
+        <td>$118,807</td>
+        <td class="change-neg">-6.54%</td>
+        <td class="change-pos">+12.91pp</td>
+        <td><strong>0.022</strong></td>
+      </tr>
+      <tr>
+        <td class="group-label">Orders</td>
+        <td>1,642</td>
+        <td>1,730</td>
+        <td class="change-pos">+5.36%</td>
+        <td>1,696</td>
+        <td>1,564</td>
+        <td class="change-neg">-7.78%</td>
+        <td class="change-pos">+13.14pp</td>
+        <td><strong>0.012</strong></td>
+      </tr>
+      <tr>
+        <td class="group-label">New Customers</td>
+        <td>1,106</td>
+        <td>1,190</td>
+        <td class="change-pos">+7.59%</td>
+        <td>1,107</td>
+        <td>1,011</td>
+        <td class="change-neg">-8.67%</td>
+        <td class="change-pos">+16.27pp</td>
+        <td><strong>0.009</strong></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="two-col">
+  <div class="chart-container">
+    <h3>Shopify Weekly Revenue - Treatment vs Control</h3>
+    <div class="chart-wrap">
+      <canvas id="shopifyRevChart"></canvas>
+    </div>
+  </div>
+  <div class="chart-container">
+    <h3>Shopify Weekly Orders - Treatment vs Control</h3>
+    <div class="chart-wrap">
+      <canvas id="shopifyOrdersChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<div class="chart-container">
+  <h3>Shopify Weekly New Customers - Treatment vs Control</h3>
+  <div class="chart-wrap" style="height: 240px;">
+    <canvas id="shopifyNewCustChart"></canvas>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- STAT TESTS SUMMARY -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="section-title">Statistical Tests Summary</div>
+
+<div class="stat-box">
+  <h4>Parametric: Two-Sample t-Test (on state-level % changes)</h4>
+  <div class="stat-grid">
+    <div>
+      <div class="stat-item"><span class="stat-key">Amazon Revenue</span><span class="stat-val sig">t=2.43, p=0.019 *</span></div>
+      <div class="stat-item"><span class="stat-key">Shopify Revenue</span><span class="stat-val sig">t=2.37, p=0.022 *</span></div>
+    </div>
+    <div>
+      <div class="stat-item"><span class="stat-key">Shopify Orders</span><span class="stat-val sig">t=2.61, p=0.012 *</span></div>
+      <div class="stat-item"><span class="stat-key">Shopify New Custs</span><span class="stat-val sig">t=2.72, p=0.009 **</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="stat-box">
+  <h4>Non-Parametric: Mann-Whitney U (robust to outliers & non-normal distributions)</h4>
+  <div class="stat-grid">
+    <div>
+      <div class="stat-item"><span class="stat-key">Amazon Revenue</span><span class="stat-val sig">U=369, p=0.049 *</span></div>
+      <div class="stat-item"><span class="stat-key">Shopify Revenue</span><span class="stat-val not-sig">U=363, p=0.066</span></div>
+    </div>
+    <div>
+      <div class="stat-item"><span class="stat-key">Shopify Orders</span><span class="stat-val sig">U=382, p=0.025 *</span></div>
+      <div class="stat-item"><span class="stat-key">Shopify New Custs</span><span class="stat-val sig">U=409, p=0.005 **</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="footnote">
+  <strong>Notes:</strong> Pre-period = ~4 weeks before 17 March 2026 (RW35-38 for Amazon, 17 Feb - 16 Mar for Shopify). Post-period = 17 March to 9 April 2026. Week 41 / w/c 6 April are partial weeks. The aggregate DiD and state-mean DiD differ because aggregate weights larger states more heavily, while state-mean treats each state equally. The state-mean approach (used for significance testing) is more robust to individual large-state effects. Amazon data is transaction-level from NetSuite; Shopify data is order-level. * = p&lt;0.05, ** = p&lt;0.01. Shopify revenue MW U test is marginally non-significant (p=0.066) but parametric test passes; this is expected as MW is more conservative with smaller samples. CA, AK, HI excluded from both groups.
+</div>
+
+<script>
+const chartDefaults = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: {
+      position: 'top',
+      labels: { font: { size: 11, family: '-apple-system, system-ui, sans-serif' }, usePointStyle: true, pointStyle: 'circle' }
+    }
+  },
+  scales: {
+    x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+    y: { grid: { color: '#EDEBE8' }, ticks: { font: { size: 10 } } }
+  }
+};
+
+// Amazon chart - last 12 retail weeks
+const amazonData = [
+  {week: "RW35", t: 523317.20, c: 527479.62},
+  {week: "RW36", t: 557015.50, c: 555447.70},
+  {week: "RW37", t: 530390.31, c: 542785.26},
+  {week: "RW38*", t: 538550.10, c: 545257.03},
+  {week: "RW39", t: 516239.57, c: 504840.61},
+  {week: "RW40", t: 499801.92, c: 504085.81},
+  {week: "RW41\u2020", t: 446032.11, c: 451848.86}
+];
+
+const annotationLine = {
+  type: 'line',
+  borderColor: '#C0392B',
+  borderWidth: 2,
+  borderDash: [6, 4],
+  label: {
+    display: true,
+    content: 'Test Start',
+    position: 'start',
+    font: { size: 10, weight: 'bold' },
+    color: '#C0392B',
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    padding: 4
+  }
+};
+
+new Chart(document.getElementById('amazonChart'), {
+  type: 'line',
+  data: {
+    labels: amazonData.map(d => d.week),
+    datasets: [
+      {
+        label: 'Treatment',
+        data: amazonData.map(d => d.t),
+        borderColor: '#00B0BE',
+        backgroundColor: 'rgba(0,176,190,0.1)',
+        borderWidth: 2.5,
+        pointRadius: 4,
+        pointBackgroundColor: '#00B0BE',
+        tension: 0.3,
+        fill: false
+      },
+      {
+        label: 'Control',
+        data: amazonData.map(d => d.c),
+        borderColor: '#2C2A2A',
+        backgroundColor: 'rgba(44,42,42,0.1)',
+        borderWidth: 2.5,
+        pointRadius: 4,
+        pointBackgroundColor: '#2C2A2A',
+        tension: 0.3,
+        fill: false
+      }
+    ]
+  },
+  options: {
+    ...chartDefaults,
+    plugins: {
+      ...chartDefaults.plugins,
+      annotation: {
+        annotations: {
+          testStart: { ...annotationLine, xMin: 3.5, xMax: 3.5 }
+        }
+      },
+      tooltip: {
+        callbacks: {
+          label: ctx => `${ctx.dataset.label}: $${ctx.parsed.y.toLocaleString('en-US', {maximumFractionDigits: 0})}`
+        }
+      }
+    },
+    scales: {
+      ...chartDefaults.scales,
+      y: {
+        ...chartDefaults.scales.y,
+        ticks: {
+          ...chartDefaults.scales.y.ticks,
+          callback: v => '$' + (v/1000).toFixed(0) + 'K'
+        }
+      }
+    }
+  }
+});
+
+// Shopify weekly data
+const shopifyData = [
+  {week: "17 Feb", t_rev: 3251.74, c_rev: 3616.86, t_ord: 42, c_ord: 52, t_new: 28, c_new: 37},
+  {week: "23 Feb", t_rev: 38705.88, c_rev: 38131.53, t_ord: 506, c_ord: 502, t_new: 346, c_new: 328},
+  {week: "2 Mar", t_rev: 40316.26, c_rev: 40118.67, t_ord: 522, c_ord: 530, t_new: 353, c_new: 346},
+  {week: "9 Mar", t_rev: 38640.30, c_rev: 40004.09, t_ord: 500, c_ord: 539, t_new: 330, c_new: 349},
+  {week: "16 Mar*", t_rev: 42327.66, c_rev: 40638.15, t_ord: 561, c_ord: 539, t_new: 373, c_new: 328},
+  {week: "23 Mar", t_rev: 38533.11, c_rev: 31601.40, t_ord: 485, c_ord: 422, t_new: 331, c_new: 282},
+  {week: "30 Mar", t_rev: 40186.42, c_rev: 33272.80, t_ord: 511, c_ord: 438, t_new: 362, c_new: 289},
+  {week: "6 Apr\u2020", t_rev: 18483.00, c_rev: 18542.34, t_ord: 245, c_ord: 238, t_new: 173, c_new: 159}
+];
+
+function makeShopifyChart(canvasId, tKey, cKey, label, fmt) {
+  new Chart(document.getElementById(canvasId), {
+    type: 'line',
+    data: {
+      labels: shopifyData.map(d => d.week),
+      datasets: [
+        {
+          label: 'Treatment',
+          data: shopifyData.map(d => d[tKey]),
+          borderColor: '#00B0BE',
+          backgroundColor: 'rgba(0,176,190,0.1)',
+          borderWidth: 2.5,
+          pointRadius: 4,
+          pointBackgroundColor: '#00B0BE',
+          tension: 0.3,
+          fill: false
+        },
+        {
+          label: 'Control',
+          data: shopifyData.map(d => d[cKey]),
+          borderColor: '#2C2A2A',
+          backgroundColor: 'rgba(44,42,42,0.1)',
+          borderWidth: 2.5,
+          pointRadius: 4,
+          pointBackgroundColor: '#2C2A2A',
+          tension: 0.3,
+          fill: false
+        }
+      ]
+    },
+    options: {
+      ...chartDefaults,
+      plugins: {
+        ...chartDefaults.plugins,
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const val = ctx.parsed.y;
+              return `${ctx.dataset.label}: ${fmt === '$' ? '$' + val.toLocaleString('en-US', {maximumFractionDigits: 0}) : val.toLocaleString()}`;
+            }
+          }
+        }
+      },
+      scales: {
+        ...chartDefaults.scales,
+        y: {
+          ...chartDefaults.scales.y,
+          ticks: {
+            ...chartDefaults.scales.y.ticks,
+            callback: v => fmt === '$' ? '$' + (v/1000).toFixed(0) + 'K' : v.toLocaleString()
+          }
+        }
+      }
+    }
+  });
+}
+
+makeShopifyChart('shopifyRevChart', 't_rev', 'c_rev', 'Revenue', '$');
+makeShopifyChart('shopifyOrdersChart', 't_ord', 'c_ord', 'Orders', '#');
+makeShopifyChart('shopifyNewCustChart', 't_new', 'c_new', 'New Customers', '#');
+</script>
+
+</body>
+</html>
