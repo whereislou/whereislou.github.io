@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meta Incrementality Test — Combined Channel Analysis</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.1.0"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #F6F5F3; color: #2C2A2A; line-height: 1.5; }
+        .header { background: linear-gradient(135deg, #006375 0%, #00B0BE 100%); color: white; padding: 40px; text-align: center; }
+        .header h1 { font-size: 2.4em; margin-bottom: 8px; font-weight: 600; }
+        .header p { font-size: 1.1em; opacity: 0.95; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 40px 20px; }
+        
+        .verdict-box { background: white; border-left: 5px solid #00B0BE; padding: 25px; margin-bottom: 40px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .verdict-box h2 { color: #006375; margin-bottom: 15px; font-size: 1.5em; }
+        .verdict-box p { line-height: 1.7; font-size: 1.05em; }
+        .verdict-highlight { background: #F6F5F3; padding: 15px; border-radius: 6px; margin: 15px 0; border-left: 3px solid #00B0BE; }
+        .verdict-positive { color: #22c55e; font-weight: 600; }
+        
+        .section-title { color: #006375; font-size: 1.8em; font-weight: 600; margin: 50px 0 25px; padding-bottom: 10px; border-bottom: 3px solid #00B0BE; }
+        
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 35px; }
+        .kpi-card { background: white; padding: 22px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); text-align: center; border-top: 4px solid #00B0BE; }
+        .kpi-label { font-size: 0.85em; color: #6b7280; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+        .kpi-value { font-size: 1.8em; font-weight: 700; margin-bottom: 4px; }
+        .kpi-value.positive { color: #22c55e; }
+        .kpi-subtext { font-size: 0.8em; color: #9ca3af; }
+        
+        .chart-section { background: white; padding: 25px; margin-bottom: 25px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .chart-section h3 { color: #006375; margin-bottom: 15px; font-size: 1.2em; border-bottom: 2px solid #00B0BE; padding-bottom: 8px; }
+        .chart-container { position: relative; height: 320px; }
+        
+        .table-section { background: white; padding: 25px; margin-bottom: 25px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .table-section h3 { color: #006375; margin-bottom: 15px; font-size: 1.2em; border-bottom: 2px solid #00B0BE; padding-bottom: 8px; }
+        table { width: 100%; border-collapse: collapse; }
+        table th { background: #F6F5F3; color: #006375; padding: 10px; text-align: left; font-weight: 600; border-bottom: 2px solid #00B0BE; }
+        table td { padding: 10px; border-bottom: 1px solid #e5e7eb; }
+        table tr:hover { background: #F6F5F3; }
+        .positive { color: #22c55e; font-weight: 600; }
+        .negative { color: #ef4444; font-weight: 600; }
+        
+        .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
+        
+        .methodology { background: #F6F5F3; border-left: 4px solid #00B0BE; padding: 20px; margin: 30px 0; border-radius: 6px; }
+        .methodology h4 { color: #006375; margin-bottom: 12px; }
+        .methodology ul { margin-left: 20px; line-height: 1.8; }
+        .methodology li { margin-bottom: 6px; }
+        .footer { text-align: center; padding: 30px; color: #6b7280; font-size: 0.9em; border-top: 1px solid #e5e7eb; margin-top: 40px; }
+        
+        details { margin-bottom: 20px; }
+        details summary { cursor: pointer; color: #006375; font-weight: 600; font-size: 1.1em; padding: 10px 0; }
+        
+        @media (max-width: 768px) { .two-col { grid-template-columns: 1fr; } .header h1 { font-size: 1.8em; } .kpi-grid { grid-template-columns: 1fr 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Meta Incrementality Test</h1>
+        <p>Shopify DTC + Amazon Halo Effect Analysis &mdash; 36-Day Window &mdash; Updated April 23, 2026</p>
+    </div>
+    
+    <div class="container">
+        <!-- EXECUTIVE VERDICT -->
+        <div class="verdict-box">
+            <h2>Bottom Line</h2>
+            <p>Increased Meta spend in 24 treatment states is generating a <span class="verdict-positive">statistically significant halo effect</span> across both Shopify DTC and Amazon.</p>
+            <div class="verdict-highlight">
+                <strong>Shopify Revenue DiD: $17,820</strong> &mdash; Treatment -3.8% vs Control -13.8% (p=0.0146)<br>
+                <strong>Shopify New Customers DiD: +126</strong> &mdash; Treatment -2.2% vs Control -10.0% (p=0.0053)<br>
+                <strong>Amazon Revenue DiD: $20,671</strong> &mdash; Treatment +3.7% vs Control +1.9% (p=0.0209)
+            </div>
+            <p>All three metrics are statistically significant at the 5% level after 36 days. The combined incremental revenue impact across both channels is <strong>$38,491</strong>.</p>
+        </div>
+
+        <!-- ======================== SHOPIFY ======================== -->
+        <h2 class="section-title">Shopify DTC</h2>
+        
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-label">Revenue DiD Lift</div>
+                <div class="kpi-value positive">$17,820</div>
+                <div class="kpi-subtext">+10.0pp &bull; p=0.0146</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">New Customer DiD</div>
+                <div class="kpi-value positive">+126</div>
+                <div class="kpi-subtext">+7.8pp &bull; p=0.0053</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Treatment Revenue</div>
+                <div class="kpi-value" style="color:#006375">-3.8%</div>
+                <div class="kpi-subtext">$176,814 &rarr; $170,180</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Control Revenue</div>
+                <div class="kpi-value negative">-13.8%</div>
+                <div class="kpi-subtext">$177,824 &rarr; $153,370</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Orders Analysed</div>
+                <div class="kpi-value" style="color:#006375; font-size:1.4em">9,671</div>
+                <div class="kpi-subtext">Matrixify export &bull; Paid only</div>
+            </div>
+        </div>
+        
+        <div class="two-col">
+            <div class="chart-section">
+                <h3>Weekly Revenue</h3>
+                <div class="chart-container"><canvas id="shopRevChart"></canvas></div>
+            </div>
+            <div class="chart-section">
+                <h3>Weekly New Customers</h3>
+                <div class="chart-container"><canvas id="shopNCChart"></canvas></div>
+            </div>
+        </div>
+        
+        <div class="two-col">
+            <div class="table-section">
+                <h3>Revenue DiD</h3>
+                <table>
+                    <thead><tr><th>Group</th><th>Pre</th><th>Post</th><th>Change</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Treatment</strong></td><td>$176,814</td><td>$170,180</td><td class="negative">-3.8%</td></tr>
+                        <tr><td><strong>Control</strong></td><td>$177,824</td><td>$153,370</td><td class="negative">-13.8%</td></tr>
+                        <tr style="background:#F6F5F3;font-weight:600"><td><strong>DiD</strong></td><td colspan="2"></td><td class="positive">$17,820 (+10.0pp)</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="table-section">
+                <h3>New Customer DiD</h3>
+                <table>
+                    <thead><tr><th>Group</th><th>Pre</th><th>Post</th><th>Change</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Treatment</strong></td><td>1,653</td><td>1,617</td><td class="negative">-2.2%</td></tr>
+                        <tr><td><strong>Control</strong></td><td>1,627</td><td>1,465</td><td class="negative">-10.0%</td></tr>
+                        <tr style="background:#F6F5F3;font-weight:600"><td><strong>DiD</strong></td><td colspan="2"></td><td class="positive">+126 (+7.8pp)</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="chart-section">
+            <h3>Bootstrap 95% CI (10,000 resamples)</h3>
+            <table>
+                <thead><tr><th>Metric</th><th>Point Est.</th><th>95% CI</th><th>Mann-Whitney p</th></tr></thead>
+                <tbody>
+                    <tr><td>Revenue (T&minus;C)</td><td class="positive">+18.9%</td><td class="positive">[+5.3%, +33.2%]</td><td>0.0081</td></tr>
+                    <tr><td>New Customers (T&minus;C)</td><td class="positive">+22.0%</td><td class="positive">[+8.8%, +36.8%]</td><td>0.0024</td></tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <details>
+            <summary>Shopify State-Level Detail (Revenue)</summary>
+            <div class="two-col">
+                <div class="table-section">
+                    <h3>Treatment States</h3>
+                    <table><thead><tr><th>State</th><th>Pre</th><th>Post</th><th>$Chg</th><th>%Chg</th></tr></thead>
+                    <tbody><tr><td><strong>KS</strong></td><td>$1,854</td><td>$3,728</td><td class="positive">$1,874</td><td class="positive">+101.1%</td></tr>
+<tr><td><strong>NV</strong></td><td>$2,360</td><td>$3,567</td><td class="positive">$1,207</td><td class="positive">+51.1%</td></tr>
+<tr><td><strong>ME</strong></td><td>$1,999</td><td>$2,929</td><td class="positive">$930</td><td class="positive">+46.5%</td></tr>
+<tr><td><strong>MD</strong></td><td>$5,755</td><td>$7,603</td><td class="positive">$1,848</td><td class="positive">+32.1%</td></tr>
+<tr><td><strong>MT</strong></td><td>$1,760</td><td>$2,183</td><td class="positive">$424</td><td class="positive">+24.1%</td></tr>
+<tr><td><strong>OK</strong></td><td>$2,957</td><td>$3,534</td><td class="positive">$576</td><td class="positive">+19.5%</td></tr>
+<tr><td><strong>CO</strong></td><td>$10,553</td><td>$11,247</td><td class="positive">$694</td><td class="positive">+6.6%</td></tr>
+<tr><td><strong>WI</strong></td><td>$5,395</td><td>$5,652</td><td class="positive">$257</td><td class="positive">+4.8%</td></tr>
+<tr><td><strong>VT</strong></td><td>$838</td><td>$875</td><td class="positive">$37</td><td class="positive">+4.4%</td></tr>
+<tr><td><strong>MN</strong></td><td>$7,487</td><td>$7,680</td><td class="positive">$194</td><td class="positive">+2.6%</td></tr>
+<tr><td><strong>NJ</strong></td><td>$15,918</td><td>$16,251</td><td class="positive">$333</td><td class="positive">+2.1%</td></tr>
+<tr><td><strong>IN</strong></td><td>$5,669</td><td>$5,501</td><td class="negative">$-168</td><td class="negative">-3.0%</td></tr>
+<tr><td><strong>TX</strong></td><td>$32,729</td><td>$31,229</td><td class="negative">$-1,499</td><td class="negative">-4.6%</td></tr>
+<tr><td><strong>WY</strong></td><td>$732</td><td>$697</td><td class="negative">$-34</td><td class="negative">-4.7%</td></tr>
+<tr><td><strong>NC</strong></td><td>$13,333</td><td>$12,649</td><td class="negative">$-684</td><td class="negative">-5.1%</td></tr>
+<tr><td><strong>OH</strong></td><td>$10,494</td><td>$9,723</td><td class="negative">$-771</td><td class="negative">-7.3%</td></tr>
+<tr><td><strong>PA</strong></td><td>$17,496</td><td>$15,220</td><td class="negative">$-2,276</td><td class="negative">-13.0%</td></tr>
+<tr><td><strong>WA</strong></td><td>$14,385</td><td>$12,470</td><td class="negative">$-1,916</td><td class="negative">-13.3%</td></tr>
+<tr><td><strong>DE</strong></td><td>$1,369</td><td>$1,180</td><td class="negative">$-189</td><td class="negative">-13.8%</td></tr>
+<tr><td><strong>AL</strong></td><td>$6,437</td><td>$5,316</td><td class="negative">$-1,120</td><td class="negative">-17.4%</td></tr>
+<tr><td><strong>AR</strong></td><td>$2,553</td><td>$1,899</td><td class="negative">$-654</td><td class="negative">-25.6%</td></tr>
+<tr><td><strong>UT</strong></td><td>$4,664</td><td>$3,414</td><td class="negative">$-1,250</td><td class="negative">-26.8%</td></tr>
+<tr><td><strong>SC</strong></td><td>$6,996</td><td>$4,469</td><td class="negative">$-2,526</td><td class="negative">-36.1%</td></tr>
+<tr><td><strong>NM</strong></td><td>$3,083</td><td>$1,161</td><td class="negative">$-1,922</td><td class="negative">-62.3%</td></tr></tbody></table>
+                </div>
+                <div class="table-section">
+                    <h3>Control States</h3>
+                    <table><thead><tr><th>State</th><th>Pre</th><th>Post</th><th>$Chg</th><th>%Chg</th></tr></thead>
+                    <tbody><tr><td><strong>ID</strong></td><td>$2,094</td><td>$2,321</td><td class="positive">$227</td><td class="positive">+10.9%</td></tr>
+<tr><td><strong>FL</strong></td><td>$19,728</td><td>$20,411</td><td class="positive">$683</td><td class="positive">+3.5%</td></tr>
+<tr><td><strong>NE</strong></td><td>$2,675</td><td>$2,674</td><td class="negative">$-1</td><td class="negative">-0.0%</td></tr>
+<tr><td><strong>MO</strong></td><td>$5,966</td><td>$5,721</td><td class="negative">$-245</td><td class="negative">-4.1%</td></tr>
+<tr><td><strong>GA</strong></td><td>$10,723</td><td>$10,178</td><td class="negative">$-545</td><td class="negative">-5.1%</td></tr>
+<tr><td><strong>WV</strong></td><td>$1,612</td><td>$1,509</td><td class="negative">$-103</td><td class="negative">-6.4%</td></tr>
+<tr><td><strong>IL</strong></td><td>$14,970</td><td>$13,539</td><td class="negative">$-1,431</td><td class="negative">-9.6%</td></tr>
+<tr><td><strong>CT</strong></td><td>$6,252</td><td>$5,592</td><td class="negative">$-660</td><td class="negative">-10.6%</td></tr>
+<tr><td><strong>NY</strong></td><td>$31,461</td><td>$28,012</td><td class="negative">$-3,448</td><td class="negative">-11.0%</td></tr>
+<tr><td><strong>MA</strong></td><td>$13,453</td><td>$11,975</td><td class="negative">$-1,478</td><td class="negative">-11.0%</td></tr>
+<tr><td><strong>VA</strong></td><td>$12,582</td><td>$10,809</td><td class="negative">$-1,773</td><td class="negative">-14.1%</td></tr>
+<tr><td><strong>NH</strong></td><td>$1,972</td><td>$1,688</td><td class="negative">$-284</td><td class="negative">-14.4%</td></tr>
+<tr><td><strong>RI</strong></td><td>$1,555</td><td>$1,323</td><td class="negative">$-232</td><td class="negative">-14.9%</td></tr>
+<tr><td><strong>AZ</strong></td><td>$7,824</td><td>$6,656</td><td class="negative">$-1,168</td><td class="negative">-14.9%</td></tr>
+<tr><td><strong>MS</strong></td><td>$1,845</td><td>$1,543</td><td class="negative">$-302</td><td class="negative">-16.4%</td></tr>
+<tr><td><strong>KY</strong></td><td>$4,561</td><td>$3,732</td><td class="negative">$-829</td><td class="negative">-18.2%</td></tr>
+<tr><td><strong>ND</strong></td><td>$1,664</td><td>$1,344</td><td class="negative">$-320</td><td class="negative">-19.2%</td></tr>
+<tr><td><strong>MI</strong></td><td>$9,842</td><td>$7,104</td><td class="negative">$-2,738</td><td class="negative">-27.8%</td></tr>
+<tr><td><strong>OR</strong></td><td>$7,152</td><td>$4,739</td><td class="negative">$-2,413</td><td class="negative">-33.7%</td></tr>
+<tr><td><strong>LA</strong></td><td>$4,286</td><td>$2,837</td><td class="negative">$-1,449</td><td class="negative">-33.8%</td></tr>
+<tr><td><strong>TN</strong></td><td>$10,252</td><td>$6,477</td><td class="negative">$-3,775</td><td class="negative">-36.8%</td></tr>
+<tr><td><strong>IA</strong></td><td>$4,184</td><td>$2,596</td><td class="negative">$-1,588</td><td class="negative">-38.0%</td></tr>
+<tr><td><strong>SD</strong></td><td>$1,172</td><td>$589</td><td class="negative">$-582</td><td class="negative">-49.7%</td></tr></tbody></table>
+                </div>
+            </div>
+        </details>
+
+        <!-- ======================== AMAZON ======================== -->
+        <h2 class="section-title">Amazon</h2>
+        
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-label">Revenue DiD Lift</div>
+                <div class="kpi-value positive">$20,671</div>
+                <div class="kpi-subtext">+1.8pp &bull; p=0.0209</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Treatment Revenue</div>
+                <div class="kpi-value" style="color:#006375">$+3.7%</div>
+                <div class="kpi-subtext">$1,170,092 &rarr; $1,213,752</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Control Revenue</div>
+                <div class="kpi-value" style="color:#006375">+1.9%</div>
+                <div class="kpi-subtext">$1,176,029 &rarr; $1,199,017</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Rows Analysed</div>
+                <div class="kpi-value" style="color:#006375; font-size:1.4em">3,350</div>
+                <div class="kpi-subtext">NetSuite export &bull; USD revenue</div>
+            </div>
+        </div>
+        
+        <div class="chart-section">
+            <h3>Weekly Revenue</h3>
+            <div class="chart-container"><canvas id="amzRevChart"></canvas></div>
+        </div>
+        
+        <div class="table-section">
+            <h3>Revenue DiD</h3>
+            <table>
+                <thead><tr><th>Group</th><th>Pre</th><th>Post</th><th>Change ($)</th><th>Change (%)</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Treatment (24 states)</strong></td><td>$1,170,092</td><td>$1,213,752</td><td class="positive">$43,660</td><td class="positive">+3.73%</td></tr>
+                    <tr><td><strong>Control (23 states)</strong></td><td>$1,176,029</td><td>$1,199,017</td><td class="positive">$22,988</td><td class="positive">+1.95%</td></tr>
+                    <tr style="background:#F6F5F3;font-weight:600"><td><strong>DiD</strong></td><td colspan="3"></td><td class="positive">$20,671 (+1.8pp)</td></tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="chart-section">
+            <h3>Bootstrap 95% CI (10,000 resamples)</h3>
+            <table>
+                <thead><tr><th>Metric</th><th>Point Est.</th><th>95% CI</th><th>Mann-Whitney p</th></tr></thead>
+                <tbody>
+                    <tr><td>Revenue (T&minus;C)</td><td class="positive">+6.6%</td><td class="positive">[+1.6%, +12.2%]</td><td>0.0222</td></tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <details>
+            <summary>Amazon State-Level Detail (Revenue)</summary>
+            <div class="two-col">
+                <div class="table-section">
+                    <h3>Treatment States</h3>
+                    <table><thead><tr><th>State</th><th>Pre</th><th>Post</th><th>$Chg</th><th>%Chg</th></tr></thead>
+                    <tbody><tr><td><strong>VT</strong></td><td>$2,650</td><td>$3,809</td><td class="positive">$1,158</td><td class="positive">+43.7%</td></tr>
+<tr><td><strong>WY</strong></td><td>$3,248</td><td>$4,497</td><td class="positive">$1,249</td><td class="positive">+38.5%</td></tr>
+<tr><td><strong>WI</strong></td><td>$35,170</td><td>$41,687</td><td class="positive">$6,517</td><td class="positive">+18.5%</td></tr>
+<tr><td><strong>DE</strong></td><td>$7,988</td><td>$9,120</td><td class="positive">$1,132</td><td class="positive">+14.2%</td></tr>
+<tr><td><strong>MN</strong></td><td>$32,445</td><td>$36,356</td><td class="positive">$3,911</td><td class="positive">+12.1%</td></tr>
+<tr><td><strong>MT</strong></td><td>$5,183</td><td>$5,698</td><td class="positive">$515</td><td class="positive">+9.9%</td></tr>
+<tr><td><strong>NM</strong></td><td>$8,892</td><td>$9,638</td><td class="positive">$746</td><td class="positive">+8.4%</td></tr>
+<tr><td><strong>CO</strong></td><td>$56,809</td><td>$61,021</td><td class="positive">$4,212</td><td class="positive">+7.4%</td></tr>
+<tr><td><strong>NJ</strong></td><td>$99,439</td><td>$106,615</td><td class="positive">$7,175</td><td class="positive">+7.2%</td></tr>
+<tr><td><strong>PA</strong></td><td>$87,061</td><td>$92,242</td><td class="positive">$5,181</td><td class="positive">+6.0%</td></tr>
+<tr><td><strong>MD</strong></td><td>$47,990</td><td>$50,478</td><td class="positive">$2,487</td><td class="positive">+5.2%</td></tr>
+<tr><td><strong>ME</strong></td><td>$6,652</td><td>$6,993</td><td class="positive">$341</td><td class="positive">+5.1%</td></tr>
+<tr><td><strong>UT</strong></td><td>$40,420</td><td>$42,247</td><td class="positive">$1,827</td><td class="positive">+4.5%</td></tr>
+<tr><td><strong>KS</strong></td><td>$20,778</td><td>$21,653</td><td class="positive">$875</td><td class="positive">+4.2%</td></tr>
+<tr><td><strong>OH</strong></td><td>$82,455</td><td>$85,719</td><td class="positive">$3,265</td><td class="positive">+4.0%</td></tr>
+<tr><td><strong>IN</strong></td><td>$45,255</td><td>$46,866</td><td class="positive">$1,611</td><td class="positive">+3.6%</td></tr>
+<tr><td><strong>TX</strong></td><td>$260,960</td><td>$267,605</td><td class="positive">$6,645</td><td class="positive">+2.5%</td></tr>
+<tr><td><strong>AL</strong></td><td>$30,816</td><td>$31,190</td><td class="positive">$374</td><td class="positive">+1.2%</td></tr>
+<tr><td><strong>SC</strong></td><td>$43,218</td><td>$43,709</td><td class="positive">$492</td><td class="positive">+1.1%</td></tr>
+<tr><td><strong>OK</strong></td><td>$29,386</td><td>$29,523</td><td class="positive">$138</td><td class="positive">+0.5%</td></tr>
+<tr><td><strong>NV</strong></td><td>$20,933</td><td>$20,972</td><td class="positive">$39</td><td class="positive">+0.2%</td></tr>
+<tr><td><strong>WA</strong></td><td>$83,425</td><td>$82,519</td><td class="negative">$-906</td><td class="negative">-1.1%</td></tr>
+<tr><td><strong>NC</strong></td><td>$99,941</td><td>$95,722</td><td class="negative">$-4,219</td><td class="negative">-4.2%</td></tr>
+<tr><td><strong>AR</strong></td><td>$18,979</td><td>$17,873</td><td class="negative">$-1,105</td><td class="negative">-5.8%</td></tr></tbody></table>
+                </div>
+                <div class="table-section">
+                    <h3>Control States</h3>
+                    <table><thead><tr><th>State</th><th>Pre</th><th>Post</th><th>$Chg</th><th>%Chg</th></tr></thead>
+                    <tbody><tr><td><strong>IA</strong></td><td>$20,904</td><td>$24,250</td><td class="positive">$3,345</td><td class="positive">+16.0%</td></tr>
+<tr><td><strong>ND</strong></td><td>$5,248</td><td>$5,867</td><td class="positive">$620</td><td class="positive">+11.8%</td></tr>
+<tr><td><strong>RI</strong></td><td>$9,436</td><td>$10,176</td><td class="positive">$740</td><td class="positive">+7.8%</td></tr>
+<tr><td><strong>MA</strong></td><td>$72,705</td><td>$78,337</td><td class="positive">$5,632</td><td class="positive">+7.8%</td></tr>
+<tr><td><strong>VA</strong></td><td>$71,129</td><td>$76,361</td><td class="positive">$5,231</td><td class="positive">+7.3%</td></tr>
+<tr><td><strong>MI</strong></td><td>$73,814</td><td>$79,195</td><td class="positive">$5,381</td><td class="positive">+7.3%</td></tr>
+<tr><td><strong>NE</strong></td><td>$15,123</td><td>$15,775</td><td class="positive">$652</td><td class="positive">+4.3%</td></tr>
+<tr><td><strong>FL</strong></td><td>$199,203</td><td>$206,907</td><td class="positive">$7,704</td><td class="positive">+3.9%</td></tr>
+<tr><td><strong>IL</strong></td><td>$98,362</td><td>$100,495</td><td class="positive">$2,133</td><td class="positive">+2.2%</td></tr>
+<tr><td><strong>NY</strong></td><td>$173,374</td><td>$175,988</td><td class="positive">$2,613</td><td class="positive">+1.5%</td></tr>
+<tr><td><strong>GA</strong></td><td>$83,305</td><td>$84,426</td><td class="positive">$1,121</td><td class="positive">+1.4%</td></tr>
+<tr><td><strong>AZ</strong></td><td>$57,177</td><td>$57,652</td><td class="positive">$475</td><td class="positive">+0.8%</td></tr>
+<tr><td><strong>MO</strong></td><td>$40,504</td><td>$40,504</td><td class="positive">$-0</td><td class="positive">+-0.0%</td></tr>
+<tr><td><strong>ID</strong></td><td>$15,785</td><td>$15,553</td><td class="negative">$-231</td><td class="negative">-1.5%</td></tr>
+<tr><td><strong>SD</strong></td><td>$7,298</td><td>$7,157</td><td class="negative">$-141</td><td class="negative">-1.9%</td></tr>
+<tr><td><strong>LA</strong></td><td>$29,829</td><td>$29,198</td><td class="negative">$-632</td><td class="negative">-2.1%</td></tr>
+<tr><td><strong>MS</strong></td><td>$15,897</td><td>$15,500</td><td class="negative">$-396</td><td class="negative">-2.5%</td></tr>
+<tr><td><strong>TN</strong></td><td>$61,973</td><td>$59,928</td><td class="negative">$-2,045</td><td class="negative">-3.3%</td></tr>
+<tr><td><strong>OR</strong></td><td>$31,366</td><td>$30,043</td><td class="negative">$-1,324</td><td class="negative">-4.2%</td></tr>
+<tr><td><strong>WV</strong></td><td>$9,364</td><td>$8,954</td><td class="negative">$-410</td><td class="negative">-4.4%</td></tr>
+<tr><td><strong>NH</strong></td><td>$13,319</td><td>$12,528</td><td class="negative">$-791</td><td class="negative">-5.9%</td></tr>
+<tr><td><strong>CT</strong></td><td>$36,426</td><td>$33,560</td><td class="negative">$-2,866</td><td class="negative">-7.9%</td></tr>
+<tr><td><strong>KY</strong></td><td>$34,488</td><td>$30,664</td><td class="negative">$-3,824</td><td class="negative">-11.1%</td></tr></tbody></table>
+                </div>
+            </div>
+        </details>
+
+        <!-- ======================== METHODOLOGY ======================== -->
+        <div class="methodology">
+            <h4>Methodology</h4>
+            <ul>
+                <li><strong>Pre-Period:</strong> February 10 &ndash; March 17, 2026 (36 days)</li>
+                <li><strong>Post-Period:</strong> March 18 &ndash; April 22, 2026 (36 days)</li>
+                <li><strong>Treatment:</strong> 24 states with increased Meta spend</li>
+                <li><strong>Control:</strong> 23 states at business-as-usual</li>
+                <li><strong>Excluded:</strong> CA, AK, HI</li>
+                <li><strong>Shopify Source:</strong> Matrixify export (paid orders, US, shipping province)</li>
+                <li><strong>Amazon Source:</strong> NetSuite export (USD revenue by state)</li>
+                <li><strong>New Customer:</strong> Shopify Customer Orders Count = 1</li>
+                <li><strong>Statistical Tests:</strong> Welch&rsquo;s t-test (primary) + Mann-Whitney U (robustness) on state-level % changes</li>
+                <li><strong>Confidence Intervals:</strong> Bootstrap percentile method, 10,000 resamples, 95% level</li>
+            </ul>
+        </div>
+    </div>
+    
+    <div class="footer">Love to Dream &middot; Meta Incrementality Test &middot; Combined Channel Analysis &middot; April 23, 2026</div>
+    
+    <script>
+        Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+        
+        function makeAnnotation(x) {
+            return { type:'line', xMin:x, xMax:x, borderColor:'#ef4444', borderWidth:2, borderDash:[6,4],
+                label:{ display:true, content:'Test Start (Mar 18)', position:'start', backgroundColor:'#ef4444',
+                    color:'#fff', font:{size:11,weight:'bold'}, padding:4, borderRadius:4 } };
+        }
+        
+        function lineOpts(labels, tData, cData, yLabel, annX) {
+            return {
+                type:'line',
+                data:{ labels:labels, datasets:[
+                    { label:'Treatment', data:tData, borderColor:'#006375', backgroundColor:'#00B0BE20', borderWidth:3, fill:true, tension:0.4, pointRadius:5, pointBackgroundColor:'#006375', pointBorderColor:'white', pointBorderWidth:2 },
+                    { label:'Control', data:cData, borderColor:'#2C2A2A', borderDash:[5,5], backgroundColor:'#2C2A2A10', borderWidth:2, fill:true, tension:0.4, pointRadius:5, pointBackgroundColor:'#2C2A2A', pointBorderColor:'white', pointBorderWidth:2 }
+                ] },
+                options:{ responsive:true, maintainAspectRatio:false,
+                    plugins:{ legend:{position:'top',labels:{usePointStyle:true,padding:20}}, annotation:{annotations:{testStart:makeAnnotation(annX)}} },
+                    scales:{ y:{beginAtZero:false, title:{display:true,text:yLabel}, ticks:{callback:v=>yLabel.includes('$')?'$'+v.toLocaleString():v} }, x:{title:{display:true,text:'Week Starting'}} }
+                }
+            };
+        }
+        
+        // Shopify Revenue
+        new Chart(document.getElementById('shopRevChart').getContext('2d'),
+            lineOpts(["2026-02-09", "2026-02-16", "2026-02-23", "2026-03-02", "2026-03-09", "2026-03-16", "2026-03-23", "2026-03-30", "2026-04-06", "2026-04-13", "2026-04-20"], [26213.27, 32738.41, 36163.92, 36331.86, 35168.13, 33092.18, 35157.33, 34857.76, 33151.01, 34263.33, 9857.5], [25875.05, 31283.43, 35907.74, 38145.24, 35676.78, 33389.14, 28193.13, 30766.04, 31090.76, 31531.67, 9334.66], 'Revenue ($)', 5.5));
+        
+        // Shopify New Customers
+        new Chart(document.getElementById('shopNCChart').getContext('2d'),
+            lineOpts(["2026-02-09", "2026-02-16", "2026-02-23", "2026-03-02", "2026-03-09", "2026-03-16", "2026-03-23", "2026-03-30", "2026-04-06", "2026-04-13", "2026-04-20"], [233, 296, 349, 351, 322, 309, 324, 337, 317, 339, 93], [220, 291, 322, 359, 332, 287, 271, 280, 320, 316, 94], 'New Customers', 5.5));
+        
+        // Amazon Revenue
+        new Chart(document.getElementById('amzRevChart').getContext('2d'),
+            lineOpts(["2026-02-09", "2026-02-16", "2026-02-23", "2026-03-02", "2026-03-09", "2026-03-16", "2026-03-23", "2026-03-30", "2026-04-06", "2026-04-13", "2026-04-20"], [199389.06, 207218.76, 218970.85, 238676.7, 230967.22, 252915.05, 246766.32, 219410.32, 245132.51, 244587.44, 79809.58], [201246.46, 204919.25, 218853.22, 237971.85, 238409.22, 251137.29, 239989.81, 217222.28, 244454.64, 242719.94, 78121.33], 'Revenue ($)', 5.5));
+    </script>
+</body>
+</html>
