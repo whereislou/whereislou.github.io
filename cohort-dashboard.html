@@ -267,6 +267,7 @@
   <div class="controls">
     <select id="marketPicker" onchange="render()">
       <option value="USA">USA</option>
+      <option value="ALL">All Markets</option>
       <option value="UK">UK</option>
       <option value="AU">AU</option>
       <option value="CA">CA</option>
@@ -286,10 +287,10 @@
 
 <div class="grid">
   <div class="card full-width"><h3>Customers Acquired</h3><div class="chart-wrap"><canvas id="chartCustomers"></canvas></div></div>
-  <div class="card"><h3>Spend per Customer — First Purchase</h3><div class="chart-wrap"><canvas id="chart0mo"></canvas></div></div>
-  <div class="card"><h3>Spend per Customer — First 3 Months</h3><div class="chart-wrap"><canvas id="chart3mo"></canvas></div></div>
-  <div class="card"><h3>Spend per Customer — First 6 Months</h3><div class="chart-wrap"><canvas id="chart6mo"></canvas></div></div>
-  <div class="card"><h3>Spend per Customer — First 12 Months</h3><div class="chart-wrap"><canvas id="chart12mo"></canvas></div></div>
+  <div class="card spend-only"><h3>Spend per Customer — First Purchase</h3><div class="chart-wrap"><canvas id="chart0mo"></canvas></div></div>
+  <div class="card spend-only"><h3>Spend per Customer — First 3 Months</h3><div class="chart-wrap"><canvas id="chart3mo"></canvas></div></div>
+  <div class="card spend-only"><h3>Spend per Customer — First 6 Months</h3><div class="chart-wrap"><canvas id="chart6mo"></canvas></div></div>
+  <div class="card spend-only"><h3>Spend per Customer — First 12 Months</h3><div class="chart-wrap"><canvas id="chart12mo"></canvas></div></div>
 </div>
 
 <div class="section-divider">
@@ -820,6 +821,110 @@ function makeRepeatDatasets(market, metricKey) {
 
 /* ── Currency symbols per market ── */
 const CURRENCY = { USA: '$', UK: '£', AU: 'A$', CA: 'C$', EU: '€' };
+const ALL_MARKETS = ['USA', 'UK', 'AU', 'CA', 'EU'];
+
+/* ── All Markets rollup helpers ── */
+function rollupCustomers(fy) {
+  return ALL_MARKETS.reduce((acc, m) => {
+    const arr = DATA[m].customers[fy];
+    return acc.map((v, i) => v + (arr[i] || 0));
+  }, Array(12).fill(0)).map(v => v === 0 ? null : v);
+}
+
+function rollupRetention(fy) {
+  // Weighted average: sum(pct * cohort_size) / sum(cohort_size) per period
+  const result = Array(25).fill(null);
+  for (let p = 0; p < 25; p++) {
+    let totalWeight = 0, weightedSum = 0;
+    ALL_MARKETS.forEach(m => {
+      const ret = (RETENTION_DATA[m] || {})[fy];
+      if (!ret || ret[p] === null || ret[p] === undefined) return;
+      // Weight by total qualifying customers in that market+FY
+      const cust = DATA[m].customers[fy];
+      const weight = cust.reduce((a, b) => a + (b || 0), 0);
+      if (weight === 0) return;
+      weightedSum += ret[p] * weight;
+      totalWeight += weight;
+    });
+    if (totalWeight > 0) result[p] = Math.round(weightedSum / totalWeight * 100) / 100;
+  }
+  return result;
+}
+
+function rollupRepeat(metricKey, fy) {
+  // Weighted average per FY month, weighted by cohort size
+  return Array.from({length: 12}, (_, i) => {
+    let totalWeight = 0, weightedSum = 0;
+    ALL_MARKETS.forEach(m => {
+      const rep = ((REPEAT_DATA[m] || {})[metricKey] || {})[fy];
+      if (!rep || rep[i] === null || rep[i] === undefined) return;
+      const cohortSize = DATA[m].customers[fy][i] || 0;
+      if (cohortSize < MIN_CUSTOMERS) return;
+      // Apply maturity cutoff
+      const maturityMonths = REPEAT_MATURITY[metricKey] || 0;
+      if (maturityMonths > 0) {
+        const cohortDate = cohortCalendarDate(fy, i);
+        const matureBy = new Date(cohortDate);
+        matureBy.setMonth(matureBy.getMonth() + maturityMonths);
+        if (matureBy > NOW) return;
+      }
+      weightedSum += rep[i] * cohortSize;
+      totalWeight += cohortSize;
+    });
+    return totalWeight > 0 ? Math.round(weightedSum / totalWeight * 10) / 10 : null;
+  });
+}
+
+function makeAllDatasetsCustomers() {
+  return ['FY24','FY25','FY26','FY27'].map(fy => {
+    const data = rollupCustomers(fy);
+    const isCurrent = (fy === 'FY26');
+    return {
+      label: fy, data,
+      borderColor: COLORS[fy].line, backgroundColor: COLORS[fy].fill,
+      borderWidth: WIDTHS[fy], borderDash: DASHES[fy],
+      pointRadius: isCurrent ? 4 : 2.5, pointHoverRadius: isCurrent ? 6 : 4,
+      pointBackgroundColor: COLORS[fy].line,
+      pointBorderColor: isCurrent ? '#fff' : COLORS[fy].line,
+      pointBorderWidth: isCurrent ? 2 : 0,
+      tension: 0.35, fill: false, spanGaps: false, order: isCurrent ? 0 : 1
+    };
+  });
+}
+
+function makeAllRetentionDatasets() {
+  return ['FY24','FY25','FY26'].map(fy => {
+    const data = rollupRetention(fy);
+    const isCurrent = (fy === 'FY26');
+    return {
+      label: fy, data: data.map(v => v === null ? null : v),
+      borderColor: COLORS[fy].line, backgroundColor: COLORS[fy].fill,
+      borderWidth: WIDTHS[fy], borderDash: DASHES[fy],
+      pointRadius: isCurrent ? 3 : 2, pointHoverRadius: isCurrent ? 5 : 3,
+      pointBackgroundColor: COLORS[fy].line,
+      pointBorderColor: isCurrent ? '#fff' : COLORS[fy].line,
+      pointBorderWidth: isCurrent ? 2 : 0,
+      tension: 0.35, fill: false, spanGaps: false, order: isCurrent ? 0 : 1
+    };
+  });
+}
+
+function makeAllRepeatDatasets(metricKey) {
+  return ['FY24','FY25','FY26'].map(fy => {
+    const data = rollupRepeat(metricKey, fy);
+    const isCurrent = (fy === 'FY26');
+    return {
+      label: fy, data,
+      borderColor: COLORS[fy].line, backgroundColor: COLORS[fy].fill,
+      borderWidth: WIDTHS[fy], borderDash: DASHES[fy],
+      pointRadius: isCurrent ? 4 : 2.5, pointHoverRadius: isCurrent ? 6 : 4,
+      pointBackgroundColor: COLORS[fy].line,
+      pointBorderColor: isCurrent ? '#fff' : COLORS[fy].line,
+      pointBorderWidth: isCurrent ? 2 : 0,
+      tension: 0.35, fill: false, spanGaps: false, order: isCurrent ? 0 : 1
+    };
+  });
+}
 
 function makeChart(canvasId, market, metricKey, isCurrency) {
   const ctx = document.getElementById(canvasId).getContext('2d');
@@ -1107,50 +1212,160 @@ const REPEAT_LABELS = { repeat_1m: '1 Month', repeat_3m: '3 Months', repeat_6m: 
 function renderRepeatChart() {
   const market = document.getElementById('marketPicker').value;
   const metricKey = document.getElementById('repeatWindowPicker').value;
+  const isAll = (market === 'ALL');
 
   if (charts.chartRepeatRate) {
-    charts.chartRepeatRate.data.datasets = makeRepeatDatasets(market, metricKey);
+    charts.chartRepeatRate.data.datasets = isAll ? makeAllRepeatDatasets(metricKey) : makeRepeatDatasets(market, metricKey);
     charts.chartRepeatRate.update('none');
   } else {
-    charts.chartRepeatRate = makeRepeatChart(market, metricKey);
+    charts.chartRepeatRate = makeRepeatChart(isAll ? 'USA' : market, metricKey);
+    if (isAll) {
+      charts.chartRepeatRate.data.datasets = makeAllRepeatDatasets(metricKey);
+      charts.chartRepeatRate.update('none');
+    }
   }
 }
 
 function render() {
   const market = document.getElementById('marketPicker').value;
+  const isAll = (market === 'ALL');
 
-  // Standard spend/customer charts
-  CHART_CONFIGS.forEach(cfg => {
-    if (charts[cfg.id]) {
-      charts[cfg.id].data.datasets = makeDatasets(market, cfg.key, cfg.currency);
-      const cur = CURRENCY[market];
-      charts[cfg.id].options.scales.y.beginAtZero = !cfg.currency;
-      charts[cfg.id].options.scales.y.ticks.callback = function(val) {
-        return cfg.currency ? cur + val.toFixed(0) : val.toLocaleString();
-      };
-      charts[cfg.id].options.plugins.tooltip.callbacks.label = function(ctx) {
-        if (ctx.raw === null || ctx.raw === undefined) return null;
-        const val = cfg.currency ? cur + ctx.raw.toFixed(2) : ctx.raw.toLocaleString();
-        return ' ' + ctx.dataset.label + ':  ' + val;
-      };
-      charts[cfg.id].update('none');
-    } else {
-      charts[cfg.id] = makeChart(cfg.id, market, cfg.key, cfg.currency);
-    }
+  // Toggle visibility of spend-only elements
+  document.querySelectorAll('.spend-only').forEach(el => {
+    el.style.display = isAll ? 'none' : '';
   });
 
-  // Retention curve (Option A)
-  if (charts.chartRetention) {
-    charts.chartRetention.data.datasets = makeRetentionDatasets(market);
-    charts.chartRetention.update('none');
+  if (isAll) {
+    // ── All Markets: customers chart with rollup ──
+    const custCfg = CHART_CONFIGS[0]; // chartCustomers
+    if (charts[custCfg.id]) {
+      charts[custCfg.id].data.datasets = makeAllDatasetsCustomers();
+      charts[custCfg.id].options.scales.y.beginAtZero = true;
+      charts[custCfg.id].options.scales.y.ticks.callback = function(val) { return val.toLocaleString(); };
+      charts[custCfg.id].options.plugins.tooltip.callbacks.label = function(ctx) {
+        if (ctx.raw === null || ctx.raw === undefined) return null;
+        return ' ' + ctx.dataset.label + ':  ' + ctx.raw.toLocaleString();
+      };
+      charts[custCfg.id].update('none');
+    } else {
+      // First render — create with USA then immediately swap datasets
+      charts[custCfg.id] = makeChart(custCfg.id, 'USA', 'customers', false);
+      charts[custCfg.id].data.datasets = makeAllDatasetsCustomers();
+      charts[custCfg.id].update('none');
+    }
+
+    // Retention curve — rollup
+    if (charts.chartRetention) {
+      charts.chartRetention.data.datasets = makeAllRetentionDatasets();
+      charts.chartRetention.update('none');
+    } else {
+      charts.chartRetention = makeRetentionChart('USA');
+      charts.chartRetention.data.datasets = makeAllRetentionDatasets();
+      charts.chartRetention.update('none');
+    }
+
+    // Repeat rate — rollup
+    const metricKey = document.getElementById('repeatWindowPicker').value;
+    if (charts.chartRepeatRate) {
+      charts.chartRepeatRate.data.datasets = makeAllRepeatDatasets(metricKey);
+      charts.chartRepeatRate.update('none');
+    } else {
+      charts.chartRepeatRate = makeRepeatChart('USA', metricKey);
+      charts.chartRepeatRate.data.datasets = makeAllRepeatDatasets(metricKey);
+      charts.chartRepeatRate.update('none');
+    }
+
+    // KPI summary — customers + repeat only
+    updateSummaryAll();
+
   } else {
-    charts.chartRetention = makeRetentionChart(market);
+    // ── Single market ──
+    CHART_CONFIGS.forEach(cfg => {
+      if (charts[cfg.id]) {
+        charts[cfg.id].data.datasets = makeDatasets(market, cfg.key, cfg.currency);
+        const cur = CURRENCY[market];
+        charts[cfg.id].options.scales.y.beginAtZero = !cfg.currency;
+        charts[cfg.id].options.scales.y.ticks.callback = function(val) {
+          return cfg.currency ? cur + val.toFixed(0) : val.toLocaleString();
+        };
+        charts[cfg.id].options.plugins.tooltip.callbacks.label = function(ctx) {
+          if (ctx.raw === null || ctx.raw === undefined) return null;
+          const val = cfg.currency ? cur + ctx.raw.toFixed(2) : ctx.raw.toLocaleString();
+          return ' ' + ctx.dataset.label + ':  ' + val;
+        };
+        charts[cfg.id].update('none');
+      } else {
+        charts[cfg.id] = makeChart(cfg.id, market, cfg.key, cfg.currency);
+      }
+    });
+
+    // Retention curve (Option A)
+    if (charts.chartRetention) {
+      charts.chartRetention.data.datasets = makeRetentionDatasets(market);
+      charts.chartRetention.update('none');
+    } else {
+      charts.chartRetention = makeRetentionChart(market);
+    }
+
+    // Repeat rate (Option B)
+    renderRepeatChart();
+
+    updateSummary(market);
+  }
+}
+
+/* ── All Markets KPI Summary — customers + repeat only ── */
+function updateSummaryAll() {
+  // Customers: sum across all markets
+  const cust26 = rollupCustomers('FY26').filter(v => v !== null && v > 0);
+  const custVal = cust26.reduce((a,b) => a+b, 0);
+  const cust25 = rollupCustomers('FY25').slice(0, cust26.length).filter(v => v !== null && v > 0);
+  const custCmp = cust25.reduce((a,b) => a+b, 0);
+
+  // 12-Mo Repeat Rate: weighted average across markets for most recent mature month
+  function latestRepeatAll(metric) {
+    const fys = ['FY26','FY25','FY24'];
+    for (const fy of fys) {
+      const rolled = rollupRepeat(metric, fy);
+      for (let i = rolled.length - 1; i >= 0; i--) {
+        if (rolled[i] !== null) return { val: rolled[i], fy, idx: i };
+      }
+    }
+    return { val: 0, fy: null, idx: -1 };
   }
 
-  // Repeat rate (Option B)
-  renderRepeatChart();
+  const rr12 = latestRepeatAll('repeat_12m');
+  const rr12Val = rr12.val;
+  // Prior year comparison
+  let rr12Cmp = 0;
+  if (rr12.fy && rr12.idx >= 0) {
+    const prevFy = rr12.fy === 'FY26' ? 'FY25' : rr12.fy === 'FY25' ? 'FY24' : null;
+    if (prevFy) {
+      const prevRolled = rollupRepeat('repeat_12m', prevFy);
+      rr12Cmp = prevRolled[rr12.idx] !== null ? prevRolled[rr12.idx] : 0;
+    }
+  }
 
-  updateSummary(market);
+  const metrics = [
+    { label: 'Customers (FY26 YTD)', val: custVal, cmp: custCmp, isCurrency: false, cmpFy: 'FY25', isPct: false },
+    { label: '12-Mo Repeat (' + (rr12.fy ? MONTHS[rr12.idx] + ' ' + rr12.fy : 'Latest') + ')', val: rr12Val, cmp: rr12Cmp, isCurrency: false, cmpFy: rr12.fy === 'FY26' ? 'FY25' : rr12.fy === 'FY25' ? 'FY24' : '', isPct: true }
+  ];
+
+  let html = '';
+  metrics.forEach(m => {
+    const pctChange = m.cmp > 0 ? ((m.val - m.cmp) / m.cmp * 100) : 0;
+    const arrow = pctChange >= 0 ? '↑' : '↓';
+    const cls = pctChange >= 0 ? 'up' : 'down';
+    const formatted = m.isPct ? m.val.toFixed(1) + '%' : m.val.toLocaleString();
+
+    html += `<div class="summary-stat">
+      <div class="label">${m.label}</div>
+      <div class="value">${formatted}</div>
+      ${m.cmp > 0 ? `<div class="delta ${cls}">${arrow} ${Math.abs(pctChange).toFixed(1)}% vs ${m.cmpFy || 'FY25'}</div>` : ''}
+    </div>`;
+  });
+
+  document.getElementById('summaryRow').innerHTML = html;
 }
 
 render();
