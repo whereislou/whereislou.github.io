@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Love to Dream — Team Overview for Bree</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+  :root {
+    --teal: #00B0BE;
+    --teal-dark: #006375;
+    --teal-light: #CEEBEE;
+    --teal-100: #E5F7F8;
+    --buff: #EDEBE8;
+    --buff-50: #F6F5F3;
+    --grey: #454F5C;
+    --grey-dark: #4F4F4F;
+    --grey-med: #9F9F9F;
+    --grey-light: #E9E6E3;
+    --black: #212529;
+    --white: #FFF;
+    --pink: #EFC3C4;
+    --blue-pale: #D0EFF1;
+    --green-pale: #DEEEE9;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', Arial, sans-serif;
+    background: var(--buff-50);
+    color: var(--black);
+    line-height: 1.5;
+  }
+
+  /* Header */
+  .header {
+    background: linear-gradient(135deg, var(--teal-dark), var(--teal));
+    color: var(--white);
+    padding: 48px 40px 40px;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::after {
+    content: '';
+    position: absolute;
+    bottom: -60px;
+    right: -60px;
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+  }
+  .header h1 {
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .header p {
+    font-size: 16px;
+    opacity: 0.85;
+    max-width: 600px;
+  }
+  .badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.18);
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    margin-top: 12px;
+    font-weight: 500;
+  }
+
+  /* Nav tabs */
+  .tabs {
+    display: flex;
+    gap: 0;
+    background: var(--white);
+    border-bottom: 2px solid var(--grey-light);
+    padding: 0 40px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .tab {
+    padding: 14px 24px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--grey-med);
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+    user-select: none;
+  }
+  .tab:hover { color: var(--teal); }
+  .tab.active {
+    color: var(--teal-dark);
+    border-bottom-color: var(--teal);
+    font-weight: 600;
+  }
+
+  /* Content */
+  .content { max-width: 1100px; margin: 0 auto; padding: 32px 40px 60px; }
+  .section { display: none; }
+  .section.active { display: block; }
+
+  h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--teal-dark);
+    margin-bottom: 20px;
+  }
+  h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--grey);
+    margin: 24px 0 12px;
+  }
+
+  /* Org chart */
+  .org-tree {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 40px;
+  }
+  .org-node {
+    background: var(--white);
+    border: 2px solid var(--grey-light);
+    border-radius: 12px;
+    padding: 16px 24px;
+    text-align: center;
+    min-width: 220px;
+    position: relative;
+    transition: all 0.2s;
+  }
+  .org-node:hover {
+    border-color: var(--teal);
+    box-shadow: 0 4px 16px rgba(0,176,190,0.12);
+  }
+  .org-node.highlight {
+    border-color: var(--teal);
+    background: var(--teal-100);
+  }
+  .org-node.you {
+    border-color: var(--teal);
+    background: linear-gradient(135deg, var(--teal), var(--teal-dark));
+    color: var(--white);
+  }
+  .org-node .name {
+    font-weight: 600;
+    font-size: 15px;
+  }
+  .org-node .role {
+    font-size: 13px;
+    opacity: 0.7;
+    margin-top: 2px;
+  }
+  .org-node.you .role { opacity: 0.85; }
+  .connector {
+    width: 2px;
+    height: 24px;
+    background: var(--grey-light);
+  }
+
+  /* Team grid */
+  .team-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  .person-card {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid var(--grey-light);
+    transition: all 0.2s;
+    cursor: default;
+  }
+  .person-card:hover {
+    border-color: var(--teal-light);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+  }
+  .person-card .name {
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--black);
+  }
+  .person-card .role {
+    font-size: 13px;
+    color: var(--teal-dark);
+    font-weight: 500;
+    margin-bottom: 8px;
+  }
+  .person-card .detail {
+    font-size: 13px;
+    color: var(--grey);
+    line-height: 1.5;
+  }
+  .person-card .tag {
+    display: inline-block;
+    background: var(--teal-100);
+    color: var(--teal-dark);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 10px;
+    border-radius: 12px;
+    margin-top: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .person-card .tag.collab { background: var(--blue-pale); color: var(--teal-dark); }
+  .person-card .tag.stakeholder { background: var(--pink); color: #7a3b3c; }
+  .person-card .tag.direct { background: var(--green-pale); color: #2a6b4e; }
+  .person-card .tag.boss { background: #fde8cc; color: #8a5a1e; }
+
+  .working-pattern {
+    font-size: 12px;
+    color: var(--grey-med);
+    margin-top: 6px;
+    font-style: italic;
+  }
+
+  /* Function blocks */
+  .function-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+    margin-bottom: 36px;
+  }
+  .function-block {
+    background: var(--white);
+    border-left: 4px solid var(--teal);
+    border-radius: 8px;
+    padding: 16px 18px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  }
+  .function-block h4 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--teal-dark);
+    margin-bottom: 6px;
+  }
+  .function-block p {
+    font-size: 13px;
+    color: var(--grey);
+    line-height: 1.4;
+  }
+  .function-block .headcount {
+    font-size: 12px;
+    color: var(--grey-med);
+    margin-top: 6px;
+  }
+
+  .function-block.yours { border-left-color: var(--teal); background: var(--teal-100); }
+  .function-block.peer { border-left-color: var(--blue-pale); }
+
+  /* Cross-functional */
+  .interaction-card {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 20px 24px;
+    border: 1px solid var(--grey-light);
+    margin-bottom: 14px;
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  .interaction-card .icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--white);
+    flex-shrink: 0;
+  }
+  .interaction-card .info { flex: 1; }
+  .interaction-card .info .name {
+    font-weight: 600;
+    font-size: 15px;
+  }
+  .interaction-card .info .title {
+    font-size: 13px;
+    color: var(--teal-dark);
+    font-weight: 500;
+  }
+  .interaction-card .info .why {
+    font-size: 13px;
+    color: var(--grey);
+    margin-top: 6px;
+    line-height: 1.5;
+  }
+  .interaction-card .freq {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 3px 10px;
+    border-radius: 12px;
+    white-space: nowrap;
+    align-self: center;
+  }
+  .freq.high { background: var(--teal-100); color: var(--teal-dark); }
+  .freq.med { background: #fef3e2; color: #8a5a1e; }
+  .freq.low { background: var(--buff); color: var(--grey); }
+
+  /* Tooltip */
+  .tip {
+    background: var(--teal-100);
+    border-left: 4px solid var(--teal);
+    border-radius: 8px;
+    padding: 14px 18px;
+    font-size: 13px;
+    color: var(--teal-dark);
+    margin-bottom: 24px;
+    line-height: 1.5;
+  }
+
+  .section-intro {
+    font-size: 15px;
+    color: var(--grey);
+    margin-bottom: 24px;
+    max-width: 700px;
+    line-height: 1.6;
+  }
+
+  .divider {
+    border: none;
+    border-top: 1px solid var(--grey-light);
+    margin: 32px 0;
+  }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    padding: 24px;
+    font-size: 12px;
+    color: var(--grey-med);
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Welcome to the Team, Bree 👋</h1>
+  <p>Your guide to who's who at Love to Dream — the digital team you'll be leading, and the cross-functional partners you'll work with every day.</p>
+  <span class="badge">Global Head of Ecommerce · Starting 9 June 2026</span>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="showSection('your-team')">Your Team</div>
+  <div class="tab" onclick="showSection('digital-functions')">Digital Functions</div>
+  <div class="tab" onclick="showSection('cross-functional')">Cross-Functional Partners</div>
+  <div class="tab" onclick="showSection('external')">External Partners</div>
+</div>
+
+<div class="content">
+
+  <!-- SECTION 1: YOUR TEAM -->
+  <div id="your-team" class="section active">
+    <h2>Your Direct Team</h2>
+    <p class="section-intro">You report to Lou (GM Digital) and manage the Ecommerce function — Pat and Kartik are your direct reports. Kat will transition her ecom responsibilities to you during your first month while she moves into her new Digital Expansion Projects Lead role.</p>
+
+    <div class="tip">💡 Kat has been acting in the HoE role — she's your best friend for context on current trading, open projects, and how things work day-to-day. Lean on her heavily in weeks 1–4.</div>
+
+    <!-- Org chart visual -->
+    <div class="org-tree">
+      <div class="org-node highlight">
+        <div class="name">Lou Simpson</div>
+        <div class="role">GM Digital · Your Manager</div>
+      </div>
+      <div class="connector"></div>
+      <div class="org-node you">
+        <div class="name">Bree Jones</div>
+        <div class="role">Global Head of Ecommerce · YOU</div>
+      </div>
+      <div class="connector"></div>
+    </div>
+
+    <div class="team-grid">
+      <div class="person-card">
+        <div class="name">Patrick (Pat) Elhindi</div>
+        <div class="role">Ecommerce Manager</div>
+        <div class="detail">Day-to-day Shopify operations: trading, product uploads, promotions, site merchandising. Your operational right hand — knows the Shopify stores inside out.</div>
+        <div class="working-pattern">Full-time · In-office</div>
+        <span class="tag direct">Direct Report</span>
+      </div>
+      <div class="person-card">
+        <div class="name">Kartik Mathur</div>
+        <div class="role">Ecommerce Coordinator</div>
+        <div class="detail">Product data, imagery, site admin. Handles the detail work that keeps the stores accurate — uploads, content QA, asset management via Salsify.</div>
+        <div class="working-pattern">Full-time · In-office</div>
+        <span class="tag direct">Direct Report</span>
+      </div>
+      <div class="person-card">
+        <div class="name">Katharina (Kat) Woergetter-Brown</div>
+        <div class="role">Digital Expansion Projects Lead (transitioning)</div>
+        <div class="detail">Currently owns the ecom function and will hand over to you. Moving into a new role focused on growth markets, SEO/GEO strategy, digital infrastructure, and governance. Key handover partner.</div>
+        <div class="working-pattern">Mon, Tue, Thu, Fri · No Wednesdays</div>
+        <span class="tag collab">Handover Partner</span>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <h2>Your Peer Group (Lou's Other Direct Reports)</h2>
+    <p class="section-intro">These are the people you'll sit alongside in the digital leadership team. You'll collaborate closely with all of them.</p>
+
+    <div class="team-grid">
+      <div class="person-card">
+        <div class="name">Anna Sheremeteva</div>
+        <div class="role">Digital Marketing Manager</div>
+        <div class="detail">Owns paid media acquisition — PPC, paid social, affiliate. Works with BSM (agency). Your landing pages and on-site content directly impact her paid channel performance. Currently on parental leave; Bruna covering.</div>
+        <span class="tag collab">Close Collaborator</span>
+      </div>
+      <div class="person-card">
+        <div class="name">Mareaka Gibbon</div>
+        <div class="role">CRM Specialist</div>
+        <div class="detail">Day-to-day Klaviyo ownership — email/SMS flows, campaigns, segmentation. Your promotional calendar and on-site strategy should align with her lifecycle comms.</div>
+        <div class="working-pattern">Mon, Tue, Thu, Fri · No Wed · Thu WFH</div>
+        <span class="tag collab">Close Collaborator</span>
+      </div>
+      <div class="person-card">
+        <div class="name">Emily Kelly</div>
+        <div class="role">CRM Consultant (Part-time)</div>
+        <div class="detail">Project-based consultant optimising lifetime Klaviyo flows. Scaling down end of June 2026.</div>
+        <div class="working-pattern">Mon, Tue, Thu only</div>
+        <span class="tag collab">Collaborator</span>
+      </div>
+      <div class="person-card">
+        <div class="name">Nicki Dadic</div>
+        <div class="role">Head of Customer & Community</div>
+        <div class="detail">Leads CS (Gorgias) and community functions. Her team handles customer feedback that feeds your CRO insights, plus social content that drives on-site traffic.</div>
+        <div class="working-pattern">Full-time · Finishes 2:30pm Wed/Thu/Fri</div>
+        <span class="tag collab">Close Collaborator</span>
+      </div>
+      <div class="person-card">
+        <div class="name">Sam Gabell</div>
+        <div class="role">Product Owner, Digital</div>
+        <div class="detail">Owns the Shopify tech stack and product roadmap. You'll partner closely on Shopify dev priorities — you hold the commercial brief, Sam manages execution via Dot Collective (dev agency). Based in Perth.</div>
+        <div class="working-pattern">Mon, Tue, Wed, Fri · No Thu (consultancy)</div>
+        <span class="tag collab">Key Partner</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 2: DIGITAL FUNCTIONS -->
+  <div id="digital-functions" class="section">
+    <h2>Digital Team Functions</h2>
+    <p class="section-intro">The digital team has six functions. You own Ecommerce — here's how all six fit together and where the collaboration points are.</p>
+
+    <div class="function-grid">
+      <div class="function-block yours">
+        <h4>🛒 Ecommerce (You)</h4>
+        <p>Storefront trading & P&L, merchandising, CRO, content strategy, SEO, promotional calendar</p>
+        <div class="headcount">3 people: You + Pat + Kartik</div>
+      </div>
+      <div class="function-block peer">
+        <h4>🌏 Digital Expansion (Kat)</h4>
+        <p>Global market localisation, digital infrastructure, knowledge/governance/AI, organic SEO/GEO, reporting</p>
+        <div class="headcount">1 person: Kat</div>
+      </div>
+      <div class="function-block peer">
+        <h4>📣 Digital Marketing (Anna)</h4>
+        <p>Paid media — Meta, TikTok, Google (via BSM); affiliates (via The Thoughtful Agency)</p>
+        <div class="headcount">1 + agencies: Anna (Bruna covering)</div>
+      </div>
+      <div class="function-block peer">
+        <h4>📧 CRM (Mareaka)</h4>
+        <p>Email/SMS lifecycle marketing via Klaviyo — flows, campaigns, segmentation</p>
+        <div class="headcount">2 people: Mareaka + Emily (PT)</div>
+      </div>
+      <div class="function-block peer">
+        <h4>💬 Customer & Community (Nicki)</h4>
+        <p>Customer service (Gorgias), social content, community engagement</p>
+        <div class="headcount">6 people: Nicki + Elise + Kerry + 3 CS reps</div>
+      </div>
+      <div class="function-block peer">
+        <h4>⚙️ Digital Product (Sam)</h4>
+        <p>Shopify platform, tech integrations, agentic AI stack, sprint planning. Manages dev agency</p>
+        <div class="headcount">1 + dev agency: Sam</div>
+      </div>
+    </div>
+
+    <div class="tip">🔑 <strong>Your key collaboration loops:</strong> You set the commercial priorities → Sam builds them in Shopify → Anna drives traffic to your pages → Mareaka nurtures the customers you convert → Nicki handles their post-purchase experience. Kat handles the international expansion that feeds your multi-market scope.</div>
+
+    <hr class="divider">
+
+    <h2>Your Key Responsibilities</h2>
+    <p class="section-intro">From the role description — the five pillars you own:</p>
+
+    <div class="function-grid">
+      <div class="function-block yours">
+        <h4>1. Commercial Trading & P&L</h4>
+        <p>Revenue, AOV, CVR and CLTV targets across 5 markets and 9 countries. Promotional calendar. Investment budget.</p>
+      </div>
+      <div class="function-block yours">
+        <h4>2. Product & Merchandising</h4>
+        <p>Global product positioning, range planning, merchandising logic, categories, bundling and cross-sell strategy.</p>
+      </div>
+      <div class="function-block yours">
+        <h4>3. Onsite Experience & CRO</h4>
+        <p>Conversion and AOV optimisation, content strategy, landing pages, test-and-learn roadmap, Shopify roadmap input.</p>
+      </div>
+      <div class="function-block yours">
+        <h4>4. Organic Growth (SEO & GEO)</h4>
+        <p>Organic search strategy across all markets, SEO performance, generative engine optimisation.</p>
+      </div>
+      <div class="function-block yours">
+        <h4>5. Team Leadership</h4>
+        <p>Lead and develop Pat and Kartik. Build ecommerce capability across Digital. Thought leadership.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 3: CROSS-FUNCTIONAL -->
+  <div id="cross-functional" class="section">
+    <h2>Cross-Functional Partners</h2>
+    <p class="section-intro">Beyond the digital team, these are the key people across the business you'll interact with regularly. Grouped by how often you'll likely engage.</p>
+
+    <h3>Leadership (Lou's Peers & Above)</h3>
+
+    <div class="interaction-card">
+      <div class="icon" style="background: var(--teal-dark);">M</div>
+      <div class="info">
+        <div class="name">Martin Matthews</div>
+        <div class="title">CEO</div>
+        <div class="why">Lou's boss. You'll present in exec forums and he has strong visibility into ecommerce performance. Commercially minded — expects data-backed recommendations.</div>
+      </div>
+      <span class="freq med">Monthly</span>
+    </div>
+
+    <div class="interaction-card">
+      <div class="icon" style="background: #8a5a1e;">P</div>
+      <div class="info">
+        <div class="name">Pat Ward</div>
+        <div class="title">CFO</div>
+        <div class="why">Budget holder and P&L governance. You'll work with Finance on margin analysis, promotional ROI, and budget allocation. Note: different person from Pat Elhindi on your team!</div>
+      </div>
+      <span class="freq med">Monthly</span>
+    </div>
+
+    <h3>Brand & Communications</h3>
+
+    <div class="interaction-card">
+      <div class="icon" style="background: var(--pink); color: var(--teal-dark);">S</div>
+      <div class="info">
+        <div class="name">Sonya Dreiling</div>
+        <div class="title">Head of Brand & Comms</div>
+        <div class="why">Major overlap — brand campaigns, creative assets, TikTok Shop content, product launches. Your on-site content strategy needs to align with her brand direction. One of your most important cross-functional relationships.</div>
+      </div>
+      <span class="freq high">Weekly</span>
+    </div>
+
+    <div class="interaction-card">
+      <div class="icon" style="background: var(--pink); color: var(--teal-dark);">C</div>
+      <div class="info">
+        <div class="name">Chloe Beary</div>
+        <div class="title">Global Senior Marketing Manager</div>
+        <div class="why">Creative asset production and Brandfolder admin. Your go-to for campaign creative, product imagery, and ensuring on-site assets are on-brand.</div>
+      </div>
+      <span class="freq high">Weekly</span>
+    </div>
+
+    <div class="interaction-card">
+      <div class="icon" style="background: var(--pink); color: var(--teal-dark);">G</div>
+      <div class="info">
+        <div class="name">Grant Cowling</div>
+        <div class="title">Graphic Designer / Canva Admin</div>
+        <div class="why">Produces on-site banners, promotional graphics, and design assets. You'll brief him on campaign creative needs.</div>
+      </div>
+      <span class="freq med">Fortnightly</span>
+    </div>
+
+    <h3>Product & Planning</h3>
+
+    <div class="interaction-card">
+      <div class="icon" style="background: var(--green-pale); color: #2a6b4e;">A</div>
+      <div class="info">
+        <div class="name">Amy McGregor-Crowe</div>
+        <div class="title">Head of Product</div>
+        <div class="why">Product roadmap, new launches, and range strategy. You'll partner on launch readiness, product positioning, and range planning for the site.</div>
+      </div>
+      <span class="freq high">Weekly</span>
+    </div>
+
+    <div class="interaction-card">
+      <div class="icon" style="background: var(--green-pale); color: #2a6b4e;">N</div>
+      <div class="info">
+        <div class="name">Natalie Jordan & Silvia Donini</div>
+        <div class="title">Merchandise Planners</div>
+        <div class="why">Inventory planning, buy quantities, and stock allocation. Critical for ensuring your promotional and trading plans align with available stock across markets.</div>
+      </div>
+      <span class="freq high">Weekly</span>
+    </div>
+
+    <h3>Market Leads</h3>
+
+    <div class="interaction-card">
+      <div class="icon" style="background: var(--blue-pale); color: var(--teal-dark);">A</div>
+      <div class="info">
+        <div class="name">Amber Jordan</div>
+        <div class="title">GM North America</div>
+        <div class="why">US is a key growth market. You'll partner on US ecom strategy, pricing architecture, promotional calendar, and Amazon coordination (Aaron Glick runs Amazon).</div>
+      </div>
+      <span class="freq high">Weekly</span>
+    </div>
+
+    <div class="interaction-card">
+      <div class="icon" style="background: var(--blue-pale); color: var(--teal-dark);">B</div>
+      <div class="info">
+        <div class="name">Beth Adebeyo</div>
+        <div class="title">Head of EMEA (covering for Ellen Law)</div>
+        <div class="why">UK is the other key growth market. Partner on UK/EU ecom trading, localisation, and promotional strategy. Ellen is on parental leave.</div>
+      </div>
+      <span class="freq high">Weekly</span>
+    </div>
+
+    <div class="interaction-card">
+      <div class="icon" style="background: var(--blue-pale); color: var(--teal-dark);">M</div>
+      <div class="info">
+        <div class="name">Meagan McNeil</div>
+        <div class="title">Head of APAC</div>
+        <div class="why">AU is the mature primary market. Partner on AU-specific trading, wholesale coordination, and APAC distributor strategy.</div>
+      </div>
+      <span class="freq med">Fortnightly</span>
+    </div>
+
+    <h3>Technology & Data</h3>
+
+    <div class="interaction-card">
+      <div class="icon" style="background: var(--teal);">A</div>
+      <div class="info">
+        <div class="name">Akshay Sapra</div>
+        <div class="title">Head of Technology & Data</div>
+        <div class="why">Shopify super admin, Power BI / Microsoft Fabric, data infrastructure. Reports to Pat Ward (CFO). Partner on reporting, data pipelines, and any tech integration needs that go beyond Shopify frontend.</div>
+      </div>
+      <span class="freq med">Fortnightly</span>
+    </div>
+
+    <h3>People & Culture</h3>
+
+    <div class="interaction-card">
+      <div class="icon" style="background: var(--buff); color: var(--grey);">L</div>
+      <div class="info">
+        <div class="name">Lorna Massey</div>
+        <div class="title">Head of People and Culture</div>
+        <div class="why">Your go-to for onboarding logistics, team development, performance frameworks, and any people matters.</div>
+      </div>
+      <span class="freq low">As needed</span>
+    </div>
+  </div>
+
+  <!-- SECTION 4: EXTERNAL -->
+  <div id="external" class="section">
+    <h2>External Partners You'll Encounter</h2>
+    <p class="section-intro">These are the key agencies and external partners relevant to your role.</p>
+
+    <div class="team-grid">
+      <div class="person-card">
+        <div class="name">BlueSense Media (BSM)</div>
+        <div class="role">Performance Marketing Agency</div>
+        <div class="detail">Paid media across AU, UK, US. Key contacts: Ibra (lead strategist), Grace (ad ops — leaving June), Gaby (creative strategist). You'll work with them on landing page strategy and paid channel optimisation.</div>
+        <span class="tag collab">Agency</span>
+      </div>
+      <div class="person-card">
+        <div class="name">The Thoughtful Agency</div>
+        <div class="role">Affiliate Marketing Agency</div>
+        <div class="detail">Manages affiliate channel. Key contacts: Alex Rose, Chris Perkins, Justine Yap. Fortnightly catch-up with the team.</div>
+        <span class="tag collab">Agency</span>
+      </div>
+      <div class="person-card">
+        <div class="name">StudioHawk</div>
+        <div class="role">SEO Agency</div>
+        <div class="detail">SEO partner. Key contact: Jack. You'll own this relationship directly — managing them to commercial outcomes is part of your remit.</div>
+        <span class="tag collab">Agency</span>
+      </div>
+      <div class="person-card">
+        <div class="name">Dot Collective</div>
+        <div class="role">Shopify Dev Agency</div>
+        <div class="detail">Managed by Sam (Product Owner) via Productive. You'll brief commercial requirements → Sam translates to dev specs → Dot builds.</div>
+        <span class="tag collab">Agency</span>
+      </div>
+      <div class="person-card">
+        <div class="name">Rank Boosters</div>
+        <div class="role">Link Building</div>
+        <div class="detail">Backlink provider. Contacts: Taylor, Mickey Rooney. Supports your SEO strategy.</div>
+        <span class="tag collab">Supplier</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  Love to Dream™ · Onboarding Resource · Prepared June 2026
+</div>
+
+<script>
+  function showSection(id) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    event.target.classList.add('active');
+    window.scrollTo({ top: document.querySelector('.tabs').offsetTop, behavior: 'smooth' });
+  }
+</script>
+
+</body>
+</html>
