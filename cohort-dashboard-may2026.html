@@ -1,0 +1,1374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cohort LTV Dashboard — Love to Dream</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --teal: #00B0BE;
+    --dark-teal: #006375;
+    --buff: #EDEBE8;
+    --light-teal: #CEEBEE;
+    --grey: #5A6675;
+    --white: #FFFFFF;
+    --red: #D7696D;
+    --green: #4CAF50;
+    --pink: #E1BBBD;
+    --mint: #8FCAC3;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: Georgia, 'Times New Roman', serif;
+    background: var(--buff);
+    color: var(--grey);
+    padding: 40px;
+  }
+
+  /* ── Header ── */
+  .header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 36px;
+    padding-bottom: 24px;
+    border-bottom: 2px solid var(--light-teal);
+  }
+
+  .header h1 {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--dark-teal);
+    letter-spacing: -0.3px;
+  }
+
+  .header p {
+    font-size: 14px;
+    color: var(--grey);
+    margin-top: 6px;
+  }
+
+  .controls {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+
+  select {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 10px 40px 10px 16px;
+    border: 2px solid var(--teal);
+    border-radius: 6px;
+    background: var(--white);
+    color: var(--dark-teal);
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2300B0BE' stroke-width='2' fill='none'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  select:hover {
+    border-color: var(--dark-teal);
+    box-shadow: 0 0 0 3px rgba(0,176,190,0.15);
+  }
+
+  .mini-select {
+    font-size: 11px;
+    padding: 4px 28px 4px 10px;
+    border-width: 1px;
+    display: inline-block;
+    margin-left: 8px;
+    vertical-align: middle;
+    background-position: right 8px center;
+  }
+
+  /* ── Legend ── */
+  .legend {
+    display: flex;
+    gap: 28px;
+    justify-content: flex-start;
+    margin-bottom: 28px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--grey);
+  }
+
+  .legend-dot {
+    width: 14px;
+    height: 4px;
+    border-radius: 2px;
+  }
+
+  .legend-dot.dotted-light {
+    background: repeating-linear-gradient(90deg, var(--light-teal) 0 4px, transparent 4px 8px);
+  }
+
+  .legend-dot.dotted-med {
+    background: repeating-linear-gradient(90deg, var(--mint) 0 5px, transparent 5px 8px);
+  }
+
+  .legend-dot.dashed-dark {
+    background: repeating-linear-gradient(90deg, var(--dark-teal) 0 6px, transparent 6px 10px);
+  }
+
+  /* ── Summary KPIs ── */
+  .summary-row {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .summary-stat {
+    text-align: left;
+    padding: 18px 16px;
+    background: var(--white);
+    border-radius: 8px;
+    border-left: 3px solid var(--teal);
+  }
+
+  .summary-stat .label {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--grey);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 8px;
+  }
+
+  .summary-stat .value {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--dark-teal);
+  }
+
+  .summary-stat .delta {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    margin-top: 6px;
+  }
+
+  .delta.up { color: var(--green); }
+  .delta.down { color: var(--red); }
+
+  /* ── Card grid ── */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+
+  .grid .card.full-width {
+    grid-column: 1 / -1;
+  }
+
+  .card {
+    background: var(--white);
+    border-radius: 8px;
+    padding: 24px 24px 20px;
+    border: 1px solid rgba(0,99,117,0.08);
+  }
+
+  .card h3 {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--dark-teal);
+    margin-bottom: 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .chart-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 2.2 / 1;
+    min-height: 0;
+  }
+
+  .card.full-width .chart-wrap {
+    aspect-ratio: 3 / 1;
+  }
+
+  .chart-wrap canvas {
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  /* ── Section divider ── */
+  .section-divider {
+    margin: 36px 0 28px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--light-teal);
+  }
+
+  .section-divider h2 {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--dark-teal);
+    letter-spacing: -0.2px;
+  }
+
+  .section-divider p {
+    font-size: 13px;
+    color: var(--grey);
+    margin-top: 4px;
+  }
+
+  /* ── Footer ── */
+  .footer {
+    margin-top: 32px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(0,99,117,0.1);
+    font-size: 12px;
+    color: var(--grey);
+    opacity: 0.7;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 1100px) {
+    .summary-row { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  @media (max-width: 768px) {
+    .grid { grid-template-columns: 1fr; }
+    .grid .card.full-width { grid-column: 1; }
+    .summary-row { grid-template-columns: repeat(2, 1fr); }
+    body { padding: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>Cohort LTV Dashboard</h1>
+    <p>Customer acquisition &amp; lifetime spend per cohort — FY24 to FY27</p>
+  </div>
+  <div class="controls">
+    <select id="marketPicker" onchange="render()">
+      <option value="USA">USA</option>
+      <option value="ALL">All Markets</option>
+      <option value="UK">UK</option>
+      <option value="AU">AU</option>
+      <option value="CA">CA</option>
+      <option value="EU">EU</option>
+    </select>
+  </div>
+</div>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot dotted-light"></div>FY24</div>
+  <div class="legend-item"><div class="legend-dot dotted-med"></div>FY25</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--teal)"></div>FY26</div>
+  <div class="legend-item"><div class="legend-dot dashed-dark"></div>FY27</div>
+</div>
+
+<div id="summaryRow" class="summary-row"></div>
+
+<div class="grid">
+  <div class="card full-width"><h3>Customers Acquired</h3><div class="chart-wrap"><canvas id="chartCustomers"></canvas></div></div>
+  <div class="card spend-only"><h3>Spend per Customer — First Purchase</h3><div class="chart-wrap"><canvas id="chart0mo"></canvas></div></div>
+  <div class="card spend-only"><h3>Spend per Customer — First 3 Months</h3><div class="chart-wrap"><canvas id="chart3mo"></canvas></div></div>
+  <div class="card spend-only"><h3>Spend per Customer — First 6 Months</h3><div class="chart-wrap"><canvas id="chart6mo"></canvas></div></div>
+  <div class="card spend-only"><h3>Spend per Customer — First 12 Months</h3><div class="chart-wrap"><canvas id="chart12mo"></canvas></div></div>
+</div>
+
+<div class="section-divider">
+  <h2>Retention &amp; Repeat Purchase</h2>
+  <p>How many customers come back — and when</p>
+</div>
+
+<div class="grid" id="retentionGrid">
+  <div class="card">
+    <h3>Retention Curve — % of Cohort Transacting at Each Month</h3>
+    <div class="chart-wrap"><canvas id="chartRetention"></canvas></div>
+  </div>
+  <div class="card">
+    <h3>Repeat Rate — Within
+      <select class="mini-select" id="repeatWindowPicker" onchange="renderRepeatChart()">
+        <option value="repeat_3m" selected>3 Months</option>
+        <option value="repeat_1m">1 Month</option>
+        <option value="repeat_6m">6 Months</option>
+        <option value="repeat_12m">12 Months</option>
+      </select>
+    </h3>
+    <div class="chart-wrap"><canvas id="chartRepeatRate"></canvas></div>
+  </div>
+</div>
+
+<div class="footer">
+  Data source: Shopify cohort reports (AU, US, UK, CA, EU) — pulled 2 Jun 2026. Cohorts with fewer than 100 customers excluded from spend metrics.
+</div>
+
+<script>
+const MONTHS = ['Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr','May','Jun'];
+
+/* ── Minimum cohort size — spend data from tiny cohorts is noisy ── */
+const MIN_CUSTOMERS = 100;
+
+const DATA = {
+  USA: {
+    customers: {
+      FY24: [0,1,841,1004,2531,1006,1471,943,1130,976,1079,1473],
+      FY25: [3216,1211,942,3615,5208,3098,2912,1606,2386,2399,2330,2524],
+      FY26: [5230,2839,3100,4869,8804,3764,4902,3259,3815,3285,3967,0],
+      FY27: [0,0,0,0,0,0,0,0,0,0,0,0]
+    },
+    spend0: {
+      FY24: [null,null,67.1,65.46,61.86,61.97,60.86,58.66,58.5,58.67,59.34,57.58],
+      FY25: [53.69,58.03,56.9,59.31,59.17,58.28,58.22,59.53,59.74,60.51,60.88,62.2],
+      FY26: [57.51,66.07,68.04,69.67,61.29,62.96,62.61,64.36,64.07,66.61,71.45,null],
+      FY27: [null,null,null,null,null,null,null,null,null,null,null,null]
+    },
+    spend3: {
+      FY24: [null,null,76.12,73.81,67.24,67.72,65.43,64.37,63.92,64.48,67.56,62.84],
+      FY25: [56.95,65.14,70.98,73.26,68.56,66.28,66.11,68.12,69.38,70.59,72.52,74.07],
+      FY26: [66.51,80.69,83.32,84.72,72.62,74.16,73.71,76.56,77.05,75.13,75.49,null],
+      FY27: [null,null,null,null,null,null,null,null,null,null,null,null]
+    },
+    spend6: {
+      FY24: [null,null,80.11,78.96,69.93,70.44,68.17,68.5,66.87,69.18,71.45,67.51],
+      FY25: [61.09,70.17,77.37,78.28,73.27,70.61,70.4,71.96,74.39,76.56,78.84,82.51],
+      FY26: [73.99,88.81,89.77,91.86,78.3,79.12,78.43,79.3,77.05,75.13,75.49,null],
+      FY27: [null,null,null,null,null,null,null,null,null,null,null,null]
+    },
+    spend12: {
+      FY24: [null,null,85.19,84.02,74.28,74.76,74.01,73.93,71.95,75.39,77.88,71.94],
+      FY25: [64.19,72.15,81.37,81.87,77.73,74.93,75.27,75.91,79.07,81.6,83.24,86.49],
+      FY26: [76.67,92.27,92.46,93.81,79.37,79.12,78.43,79.3,77.05,75.13,75.49,null],
+      FY27: [null,null,null,null,null,null,null,null,null,null,null,null]
+    }
+  },
+  UK: {
+    customers: {
+      FY24: [1429,0,2121,3163,4235,2038,2231,1857,1551,1647,1540,1480],
+      FY25: [2136,1820,4485,5213,6781,4555,3306,2521,2937,2848,2939,2810],
+      FY26: [3632,2804,4750,3872,5760,3460,2096,1991,2583,2486,3602,0],
+      FY27: [0,0,0,0,0,0,0,0,0,0,0,0]
+    },
+    spend0: {
+      FY24: [44.06,null,47.39,48.19,45.66,44.29,44.8,42.6,44.59,43.41,44.12,43.52],
+      FY25: [42.23,44.15,44.59,43.67,41.61,39.92,41.42,42.6,45.03,43.42,44.03,42.28],
+      FY26: [41.28,45.59,49.06,50.54,47,45.51,47.78,46.99,45.44,45.54,46.11,null],
+      FY27: [null,null,null,null,null,null,null,null,null,null,null,null]
+    },
+    spend3: {
+      FY24: [47.32,null,57.79,55.19,51.66,49.72,50.32,48.63,51.55,49.27,51.47,51.32],
+      FY25: [49.24,53.58,53.4,52.95,48.68,46.22,49.17,49.61,53.18,51.47,52.72,51.62],
+      FY26: [51.22,55.56,59.15,59.29,53.19,50.93,54.89,56.19,54.52,52.03,48.79,null],
+      FY27: [null,null,null,null,null,null,null,null,null,null,null,null]
+    },
+    spend6: {
+      FY24: [52.22,null,62.2,59.83,55.25,53.83,54.71,54.52,56.9,54.93,59.37,59.6],
+      FY25: [55.4,60.08,58.23,58.13,53.34,51.22,54.56,55.1,59.41,59.3,60.12,60.29],
+      FY26: [58.45,62.38,63.19,63.81,58.15,56.74,59.46,60.05,54.52,52.03,48.79,null],
+      FY27: [null,null,null,null,null,null,null,null,null,null,null,null]
+    },
+    spend12: {
+      FY24: [54.68,null,65.87,64.39,59.41,58.09,60.94,59.65,63.76,59.5,65.02,63.66],
+      FY25: [58.22,63.64,62.53,62.82,57.57,56.48,59.44,60.89,65.52,64.6,65.05,64.25],
+      FY26: [62.31,65.56,66.35,66.05,59.67,56.74,59.46,60.05,54.52,52.03,48.79,null],
+      FY27: [null,null,null,null,null,null,null,null,null,null,null,null]
+    }
+  },
+  AU: {
+    customers: {
+      FY24: [2873,1961,929,844,1891,1084,970,847,2715,3403,2577,3488],
+      FY25: [1790,1338,1657,2190,2906,2770,2203,2120,2790,5787,3620,4916],
+      FY26: [2448,2235,3220,2937,4385,3028,2876,1981,3020,3284,3249,0],
+      FY27: [0,0,0,0,0,0,0,0,0,0,0,0]
+    },
+    spend0: {
+      FY24: [89.55,92.02,100.4,95.93,90.38,93.34,94.48,96.17,103.87,105.26,103.41,99.11],
+      FY25: [96.13,94.67,92.27,88.66,85.89,84.5,87.95,94.86,101.27,98.43,105.01,94.27],
+      FY26: [99.37,97.78,91.41,93.69,94.2,98.27,98.66,97.48,105.42,111.79,113.47,null],
+      FY27: [null,null,null,null,null,null,null,null,null,null,null,null]
+    },
+    spend3: {
+      FY24: [98.03,99.47,110.37,103.86,96.88,100.42,109.3,115.59,118.91,119.07,115.39,107.68],
+      FY25: [105.24,106.94,107.36,101.26,95.56,93.63,101.5,112.98,120.45,113.15,118.48,104.24],
+      FY26: [113.03,113.94,108.08,109.25,107.67,110.61,113.62,120.16,125.4,123.3,118.42,null],
+      FY27: [null,null,null,null,null,null,null,null,null,null,null,null]
+    },
+    spend6: {
+      FY24: [102.89,104.46,115.95,112.04,108.92,116.52,126.1,132.21,130.17,126.34,123.54,116.08],
+      FY25: [115.84,119.56,118.79,113.59,107.23,108.03,117.9,127.09,133.3,123,130.12,116.91],
+      FY26: [127.24,129.67,118.57,121.5,121.32,126.82,126.25,127.22,125.4,123.3,118.42,null],
+      FY27: [null,null,null,null,null,null,null,null,null,null,null,null]
+    },
+    spend12: {
+      FY24: [114.83,118.12,133.6,128.44,119.24,125.39,135.83,144.37,141.91,136.61,136.19,127.18],
+      FY25: [131.91,137.05,137.07,130.64,120.13,119.93,128.56,140.77,146.44,134.12,142.31,128.34],
+      FY26: [138.04,141.86,128.47,128.07,125.01,126.82,126.25,127.22,125.4,123.3,118.42,null],
+      FY27: [null,null,null,null,null,null,null,null,null,null,null,null]
+    }
+  },
+  CA: {
+    customers: {
+      FY24: [0,0,28,45,231,85,259,224,232,301,246,365],
+      FY25: [483,375,453,370,413,858,481,193,226,197,227,238],
+      FY26: [481,393,515,558,1120,803,701,414,483,441,489,0],
+      FY27: [0,0,0,0,0,0,0,0,0,0,0,0]
+    },
+    spend0: {
+      FY24: [null,null,null,null,82.42,null,75.2,81.69,77.66,75.57,72.35,78.02],
+      FY25: [76.41,77.76,75.37,79.06,81.4,76.93,75.77,85.16,86.35,88.48,96.13,93.65],
+      FY26: [96.87,97.95,95.3,95.39,90.15,86.71,87.9,94.09,95.85,97.53,101.19,null],
+      FY27: [null,null,null,null,null,null,null,null,null,null,null,null]
+    },
+    spend3: {
+      FY24: [null,null,null,null,100.53,null,85.29,89.03,86.18,87.8,86.55,88.84],
+      FY25: [86.98,91.76,91.36,97.15,99.23,87.33,86.83,101.32,98.85,101.06,120.15,108.88],
+      FY26: [110.35,120.62,116.67,114.49,104.12,103.95,104.31,109.45,112.47,112.89,106.95,null],
+      FY27: [null,null,null,null,null,null,null,null,null,null,null,null]
+    },
+    spend6: {
+      FY24: [null,null,null,null,113.72,null,89.21,97.84,95.71,92.19,92.91,95.13],
+      FY25: [95.86,98.96,100,105.16,106.4,92.31,91.63,113.07,107.35,115.26,134.58,121.88],
+      FY26: [125.95,130.83,128.37,125.15,114,115.29,109.31,115.31,112.47,112.89,106.95,null],
+      FY27: [null,null,null,null,null,null,null,null,null,null,null,null]
+    },
+    spend12: {
+      FY24: [null,null,null,null,123.7,null,92.63,102.29,98.71,97.01,98.07,100.89],
+      FY25: [99.2,100.76,102.96,110.92,113.75,98.48,97.69,122.51,111.31,124.54,141.54,125.45],
+      FY26: [131.57,131.76,131.6,127.49,116.01,115.29,109.31,115.31,112.47,112.89,106.95,null],
+      FY27: [null,null,null,null,null,null,null,null,null,null,null,null]
+    }
+  },
+  EU: {
+    customers: {
+      FY24: [0,0,29,47,66,23,30,22,22,26,24,28],
+      FY25: [100,65,158,439,553,477,444,306,317,348,315,447],
+      FY26: [494,540,738,589,615,449,516,392,447,394,522,0],
+      FY27: [0,0,0,0,0,0,0,0,0,0,0,0]
+    },
+    spend0: {
+      FY24: [null,null,null,null,null,null,null,null,null,null,null,null],
+      FY25: [48.43,null,46.5,42.22,42.55,36.99,40.23,38.58,38.05,42.85,41.41,40.9],
+      FY26: [40.39,42.27,43.75,43.4,45.49,42.09,42.87,40.13,41.4,41.95,45.2,null],
+      FY27: [null,null,null,null,null,null,null,null,null,null,null,null]
+    },
+    spend3: {
+      FY24: [null,null,null,null,null,null,null,null,null,null,null,null],
+      FY25: [56.04,null,56.56,50.35,49.53,42.65,46.86,43.71,45.48,49.35,48.08,48.56],
+      FY26: [49.55,53.77,53.22,51.07,53.96,49.59,52.36,46.07,49.07,47.24,47.59,null],
+      FY27: [null,null,null,null,null,null,null,null,null,null,null,null]
+    },
+    spend6: {
+      FY24: [null,null,null,null,null,null,null,null,null,null,null,null],
+      FY25: [64.77,null,62.79,54.44,52.52,45.22,50.01,47.16,51.37,54.21,55.23,54.49],
+      FY26: [53.92,57.98,56.2,54.16,58.63,53.15,57.05,49.67,49.07,47.24,47.59,null],
+      FY27: [null,null,null,null,null,null,null,null,null,null,null,null]
+    },
+    spend12: {
+      FY24: [null,null,null,null,null,null,null,null,null,null,null,null],
+      FY25: [67.87,null,68.61,57.54,57.31,48.56,54.35,51.7,54.36,57.57,60.08,57.16],
+      FY26: [55.71,60.59,58.48,55.52,59.83,53.15,57.05,49.67,49.07,47.24,47.59,null],
+      FY27: [null,null,null,null,null,null,null,null,null,null,null,null]
+    }
+  }
+};
+
+/* ── Option A: Retention Curve (avg % transacting at each period, by FY) ── */
+const RETENTION_DATA = {
+  AU: {
+    FY24: [2.11,4.16,3.9,3.24,2.97,2.49,2.52,2.17,1.94,1.73,1.59,1.39,1.57,1.61,1.4,1.45,1.33,1.13,1.11,1.25,1.17,1.03,0.99,0.91,0.9],
+    FY25: [2.76,5.33,5.2,4.42,3.81,3.21,2.72,2.5,2.08,1.82,1.57,1.49,1.3,1.35,1.38,1.16,1.02,1.09,1.22,1.14,1.13,1.56,1.17,null,null],
+    FY26: [3.62,6.03,6,4.93,4.04,3.06,2.78,2.34,1.95,2.16,1.55,null,null,null,null,null,null,null,null,null,null,null,null,null,null]
+  },
+  USA: {
+    FY24: [2.16,4.35,2.8,1.86,1.54,1.39,1.17,1.27,1.01,1.02,1.06,0.87,0.88,0.88,0.9,0.55,0.63,0.61,0.71,0.67,0.51,0.62,0.55,0.54,0.69],
+    FY25: [3.6,6.27,4.37,2.91,2.03,1.53,1.14,0.81,0.83,0.67,0.76,0.61,0.63,0.53,0.48,0.47,0.56,0.43,0.43,0.46,0.46,0.25,0.25,null,null],
+    FY26: [5.15,6.85,5.19,3.72,2.44,1.6,1.34,1.02,0.82,0.46,0.36,null,null,null,null,null,null,null,null,null,null,null,null,null,null]
+  },
+  UK: {
+    FY24: [2.94,5.09,4.97,4.15,3.51,2.43,2.02,1.39,1.37,1.13,1.04,0.91,1.08,1.01,0.93,0.78,0.82,0.89,0.92,0.9,0.95,0.78,0.69,0.8,0.76],
+    FY25: [3.95,7.17,6.5,4.99,3.72,2.81,2.17,1.56,1.37,1.06,1.01,0.95,0.98,0.95,0.88,0.76,0.74,0.67,0.47,0.52,0.7,0.45,0.7,null,null],
+    FY26: [4.48,6.85,5.96,4.44,3.24,2.53,1.81,1.53,1.39,1.26,1.4,null,null,null,null,null,null,null,null,null,null,null,null,null,null]
+  },
+  CA: {
+    FY24: [3.62,4.67,5.62,3.6,2.75,1.67,1.83,1.23,0.99,0.6,0.68,0.6,0.39,0.54,0.45,0.36,0.49,0.22,0.71,0.43,0.37,0.33,0.55,0.29,0.34],
+    FY25: [4.51,6.45,5.12,3.82,2.95,2.34,1.19,1.23,1.08,0.57,0.65,0.68,0.56,0.43,0.28,0.43,0.3,0.3,0.23,0.22,0.45,0.1,0.21,null,null],
+    FY26: [5.09,6.99,5.51,4.19,3.14,2.5,1.16,0.66,0.48,0.83,0.62,null,null,null,null,null,null,null,null,null,null,null,null,null,null]
+  },
+  EU: {
+    FY25: [4.22,6.26,5.23,3.94,2.87,1.64,1.52,1.27,1.12,0.89,0.72,1.04,0.71,0.8,0.35,0.46,0.67,0.36,0.2,0.23,0,0,1,null,null],
+    FY26: [5.4,7.58,4.75,3.79,2.32,1.64,1.51,0.49,1.05,1.04,0.4,null,null,null,null,null,null,null,null,null,null,null,null,null,null]
+  }
+};
+
+/* ── Option B: Repeat Rate Trend (% of cohort repeating within X months) ── */
+const REPEAT_DATA = {
+  AU: {
+    repeat_1m: {
+      FY24: [3.1,2.7,1.8,0.9,1.7,2.2,2.1,1.7,2.6,1.6,2.4,2.4],
+      FY25: [1.5,2.4,2.8,2.1,2.8,2.1,2.8,3.2,3.5,3.3,3.1,3.6],
+      FY26: [2.9,3.5,3.8,3.1,3.8,2.7,2.9,4.2,4.1,3.8,5.1,null],
+      FY27: [null,null,null,null,null,null,null,null,null,null,null,null]
+    },
+    repeat_3m: {
+      FY24: [9.3,7.9,9.1,7.5,6.5,6.9,12.8,16.3,13.3,12.3,11.9,8.2],
+      FY25: [9.6,12.6,15.9,14.6,10.6,10.1,13.2,16.8,18.2,14.4,13.8,9.9],
+      FY26: [13.1,16.9,16.8,16,14.1,12.4,13.5,19.8,16.3,10.1,5.1,null],
+      FY27: [null,null,null,null,null,null,null,null,null,null,null,null]
+    },
+    repeat_6m: {
+      FY24: [14.2,12.6,14,14.9,16.4,20,26.7,30.1,22.9,18.6,19.4,16.5],
+      FY25: [20.7,24.2,26.7,25.7,21,22.3,28,29,29.7,23.4,24.6,21.7],
+      FY26: [25.5,31.6,26.3,27,25,25.7,22.7,24.7,16.3,10.1,5.1,null],
+      FY27: [null,null,null,null,null,null,null,null,null,null,null,null]
+    },
+    repeat_12m: {
+      FY24: [24.9,24.2,29.8,28.9,26.2,28.9,36.3,42.9,34.5,28.4,31,26.6],
+      FY25: [34.5,39.3,42.8,40.6,32.6,33,38.1,40.8,41.4,33.5,35.1,31.2],
+      FY26: [35.1,41.7,34.1,32,27.6,25.7,22.7,24.7,16.3,10.1,5.1,null],
+      FY27: [null,null,null,null,null,null,null,null,null,null,null,null]
+    }
+  },
+  USA: {
+    repeat_1m: {
+      FY24: [null,null,3,1.6,2.8,1.3,2,3,2,1.8,2.1,1.8],
+      FY25: [1.6,2.6,4.1,5.3,4.7,3.2,4.7,2.9,3.6,3.4,3.4,3.6],
+      FY26: [4.3,3.6,4.9,4.3,6.2,5.6,4.8,5.7,6.9,5,5.4,null],
+      FY27: [null,null,null,null,null,null,null,null,null,null,null,null]
+    },
+    repeat_3m: {
+      FY24: [null,null,12.2,12.3,7.9,8.2,6.3,8.6,7.9,8.5,12.1,9.1],
+      FY25: [4.5,10.2,22.3,20.5,14.6,12.2,12.2,12.6,13.6,14.3,16.7,17.2],
+      FY26: [12.2,17.5,21.2,21.1,16.6,16.3,15.3,16.7,17.7,12.1,5.4,null],
+      FY27: [null,null,null,null,null,null,null,null,null,null,null,null]
+    },
+    repeat_6m: {
+      FY24: [null,null,18.1,17.8,11.5,11.9,10.3,13.9,11.9,14.4,16.7,14.4],
+      FY25: [9.5,16.5,30.4,27.2,20,17.7,17,17.6,20.2,22.1,24,26.6],
+      FY26: [21.1,27.3,29,30.2,23.5,21.7,20.6,19.9,17.7,12.1,5.4,null],
+      FY27: [null,null,null,null,null,null,null,null,null,null,null,null]
+    },
+    repeat_12m: {
+      FY24: [null,null,25.9,23.6,16.9,16.7,17.5,20.8,18.1,22.3,23.7,19.6],
+      FY25: [13.1,19.2,34.9,31.5,25.1,23,22.6,22.5,25.6,27.6,29.3,32],
+      FY26: [24.6,31.5,32.1,32.6,24.8,21.7,20.6,19.9,17.7,12.1,5.4,null],
+      FY27: [null,null,null,null,null,null,null,null,null,null,null,null]
+    }
+  },
+  UK: {
+    repeat_1m: {
+      FY24: [2.7,null,3,3,4.1,2.5,2.8,2.7,2.6,3.3,2.9,2.8],
+      FY25: [2.7,2.9,3.6,4.4,4.7,4.3,4.6,3.1,4.1,3.9,4.6,4.4],
+      FY26: [4,4.1,4.6,4.1,4.7,4.2,4,4.5,4.7,4.8,5.7,null],
+      FY27: [null,null,null,null,null,null,null,null,null,null,null,null]
+    },
+    repeat_3m: {
+      FY24: [6.9,null,18.5,13.6,12.2,11.5,11.5,12.1,13.3,12.3,14.4,16.7],
+      FY25: [14.3,19.8,19.5,21.6,16.6,14.5,16.8,15.2,16.7,17.1,18.8,20.4],
+      FY26: [18.9,19.7,20.1,18.5,13.6,11.8,13.9,18.1,18,13.3,5.7,null],
+      FY27: [null,null,null,null,null,null,null,null,null,null,null,null]
+    },
+    repeat_6m: {
+      FY24: [15.8,null,26.6,22,18.8,19.1,19.8,23.2,23.8,23.8,28.6,32.4],
+      FY25: [26.7,32.5,29.1,31.4,25.6,24.3,27.5,26.3,28.2,31.6,31.3,35.2],
+      FY26: [31,31.6,27.6,26.5,22.6,22.3,21.8,24.4,18,13.3,5.7,null],
+      FY27: [null,null,null,null,null,null,null,null,null,null,null,null]
+    },
+    repeat_12m: {
+      FY24: [19.8,null,33,29.8,25.7,26.4,30.2,31.9,35.3,32.1,37.2,39],
+      FY25: [32.4,38.6,36.9,39.5,33.4,33.7,36.4,36.5,38.3,40.2,39.2,42.2],
+      FY26: [37.1,37.3,32.6,30.4,25.2,22.3,21.8,24.4,18,13.3,5.7,null],
+      FY27: [null,null,null,null,null,null,null,null,null,null,null,null]
+    }
+  },
+  CA: {
+    repeat_1m: {
+      FY24: [null,null,null,null,6.5,null,5.4,1.8,3.4,1.7,1.6,4.9],
+      FY25: [3.7,3.7,6,3.8,5.3,4.8,6,4.7,5.3,2.5,5.7,2.5],
+      FY26: [3.5,5.3,5.2,3,6.9,6.6,7.6,3.6,3.9,4.5,5.7,null],
+      FY27: [null,null,null,null,null,null,null,null,null,null,null,null]
+    },
+    repeat_3m: {
+      FY24: [null,null,null,null,22.5,null,11.6,8,10.8,12.6,17.1,14.8],
+      FY25: [12.4,15.5,18.3,18.1,22,13.3,12.5,17.1,13.3,13.7,22.5,14.3],
+      FY26: [13.1,21.6,22.1,19.9,15.3,19.3,17,15,14.3,12.2,5.7,null],
+      FY27: [null,null,null,null,null,null,null,null,null,null,null,null]
+    },
+    repeat_6m: {
+      FY24: [null,null,null,null,36.4,null,15.4,17,22,17.6,23.6,21.6],
+      FY25: [21.1,24.3,28,27,29.3,18.5,17.5,27.5,20.8,27.4,34.4,26.5],
+      FY26: [27.4,30.8,33.4,29.9,23.2,28.3,21,19.8,14.3,12.2,5.7,null],
+      FY27: [null,null,null,null,null,null,null,null,null,null,null,null]
+    },
+    repeat_12m: {
+      FY24: [null,null,null,null,48.1,null,20.1,22.3,25,22.6,29.7,27.4],
+      FY25: [24.2,26.1,30.9,33.2,36.6,24.2,22.7,35.8,25.2,36,41.9,30.3],
+      FY26: [32.4,31.6,36.3,31.9,24.7,28.3,21,19.8,14.3,12.2,5.7,null],
+      FY27: [null,null,null,null,null,null,null,null,null,null,null,null]
+    }
+  },
+  EU: {
+    repeat_1m: {
+      FY24: [null,null,null,null,null,null,null,null,null,null,null,null],
+      FY25: [3,null,5.1,3.2,5.6,3.4,6.8,2.9,5,4,3.2,4.3],
+      FY26: [6.3,5.4,6,4.9,6.7,5.6,5.4,4.3,5.6,3.6,5.7,null],
+      FY27: [null,null,null,null,null,null,null,null,null,null,null,null]
+    },
+    repeat_3m: {
+      FY24: [null,null,null,null,null,null,null,null,null,null,null,null],
+      FY25: [11,null,22.2,18.2,17.2,14,18,12.7,12.9,14.1,14.9,17.4],
+      FY26: [19,21.5,18.8,17,19.2,16.7,19.8,13.5,15.9,10.9,5.7,null],
+      FY27: [null,null,null,null,null,null,null,null,null,null,null,null]
+    },
+    repeat_6m: {
+      FY24: [null,null,null,null,null,null,null,null,null,null,null,null],
+      FY25: [23,null,32.9,25.5,22.4,19.7,26.1,19.6,21.5,21.8,26,27.1],
+      FY26: [27.3,28.9,24.1,23.3,27,23.8,27.5,19.9,15.9,10.9,5.7,null],
+      FY27: [null,null,null,null,null,null,null,null,null,null,null,null]
+    },
+    repeat_12m: {
+      FY24: [null,null,null,null,null,null,null,null,null,null,null,null],
+      FY25: [30,null,41.8,30.5,29.7,25.4,33.1,27.8,26.2,27.3,34.6,31.8],
+      FY26: [30.4,33,27.5,25.5,29.4,23.8,27.5,19.9,15.9,10.9,5.7,null],
+      FY27: [null,null,null,null,null,null,null,null,null,null,null,null]
+    }
+  }
+};
+
+/* ── Maturity windows for repeat rate metrics (months needed to be complete) ── */
+const REPEAT_MATURITY = { repeat_1m: 1, repeat_3m: 3, repeat_6m: 6, repeat_12m: 12 };
+
+/* ── Brand palette for FY lines ──
+   FY24 = light + dotted (oldest)
+   FY25 = medium + dotted
+   FY26 = solid teal (current year hero)
+   FY27 = dark teal dashed (forecast)
+*/
+const COLORS = {
+  FY24: { line: '#CEEBEE', fill: 'rgba(206,235,238,0.04)' },
+  FY25: { line: '#8FCAC3', fill: 'rgba(143,202,195,0.04)' },
+  FY26: { line: '#00B0BE', fill: 'rgba(0,176,190,0.06)' },
+  FY27: { line: '#006375', fill: 'rgba(0,99,117,0.06)' }
+};
+
+const DASHES = { FY24: [4, 4], FY25: [6, 3], FY26: [], FY27: [8, 4] };
+const WIDTHS = { FY24: 1.5, FY25: 2, FY26: 3, FY27: 2.5 };
+
+const charts = {};
+
+/*
+ * Maturity windows — how many months a cohort needs to have
+ * elapsed before we consider the data "complete" for that metric.
+ */
+const MATURITY = { spend0: 0, spend3: 3, spend6: 6, spend12: 12 };
+
+/*
+ * FY month index → calendar start date.
+ * FY starts in July, so index 0 = Jul, 1 = Aug, ..., 11 = Jun.
+ */
+const FY_START_YEAR = { FY24: 2023, FY25: 2024, FY26: 2025, FY27: 2026 };
+
+function cohortCalendarDate(fy, monthIndex) {
+  const baseYear = FY_START_YEAR[fy];
+  const calMonth = ((monthIndex + 6) % 12);
+  const calYear = baseYear + (monthIndex >= 6 ? 1 : 0);
+  return new Date(calYear, calMonth, 1);
+}
+
+const NOW = new Date(2026, 5, 2); // June 2, 2026
+
+/*
+ * Clean spend data:
+ * 1. Null out tiny cohorts (< MIN_CUSTOMERS) — noisy averages
+ * 2. Null out immature cohorts — haven't had enough time for the window to complete
+ */
+function cleanSpend(market, metricKey, fy) {
+  const raw = DATA[market][metricKey][fy];
+  const cust = DATA[market].customers[fy];
+  const maturityMonths = MATURITY[metricKey] ?? 0;
+
+  return raw.map((v, i) => {
+    if (v === null || v === undefined) return null;
+    if (cust[i] < MIN_CUSTOMERS) return null;
+
+    if (maturityMonths > 0) {
+      const cohortDate = cohortCalendarDate(fy, i);
+      const matureBy = new Date(cohortDate);
+      matureBy.setMonth(matureBy.getMonth() + maturityMonths);
+      if (matureBy > NOW) return null;
+    }
+
+    return v;
+  });
+}
+
+/*
+ * Clean repeat rate data — same maturity logic
+ */
+function cleanRepeat(market, metricKey, fy) {
+  const raw = REPEAT_DATA[market][metricKey][fy];
+  if (!raw) return Array(12).fill(null);
+  const maturityMonths = REPEAT_MATURITY[metricKey] ?? 0;
+
+  return raw.map((v, i) => {
+    if (v === null || v === undefined) return null;
+
+    if (maturityMonths > 0) {
+      const cohortDate = cohortCalendarDate(fy, i);
+      const matureBy = new Date(cohortDate);
+      matureBy.setMonth(matureBy.getMonth() + maturityMonths);
+      if (matureBy > NOW) return null;
+    }
+
+    return v;
+  });
+}
+
+function makeDatasets(market, metricKey, isCurrency) {
+  return ['FY24','FY25','FY26','FY27'].map(fy => {
+    let data;
+    if (isCurrency) {
+      data = cleanSpend(market, metricKey, fy);
+    } else {
+      data = DATA[market][metricKey][fy].map(v => (v === 0 ? null : v));
+    }
+    const isCurrent = (fy === 'FY26');
+    return {
+      label: fy,
+      data: data,
+      borderColor: COLORS[fy].line,
+      backgroundColor: COLORS[fy].fill,
+      borderWidth: WIDTHS[fy],
+      borderDash: DASHES[fy],
+      pointRadius: isCurrent ? 4 : 2.5,
+      pointHoverRadius: isCurrent ? 6 : 4,
+      pointBackgroundColor: COLORS[fy].line,
+      pointBorderColor: isCurrent ? '#fff' : COLORS[fy].line,
+      pointBorderWidth: isCurrent ? 2 : 0,
+      tension: 0.35,
+      fill: false,
+      spanGaps: false,
+      order: isCurrent ? 0 : 1
+    };
+  });
+}
+
+/* ── Retention curve datasets (Option A) — periods M0-M24 ── */
+function makeRetentionDatasets(market) {
+  return ['FY24','FY25','FY26'].map(fy => {
+    const raw = RETENTION_DATA[market][fy] || [];
+    const isCurrent = (fy === 'FY26');
+    return {
+      label: fy,
+      data: raw.map(v => v === null ? null : v),
+      borderColor: COLORS[fy].line,
+      backgroundColor: COLORS[fy].fill,
+      borderWidth: WIDTHS[fy],
+      borderDash: DASHES[fy],
+      pointRadius: isCurrent ? 3 : 2,
+      pointHoverRadius: isCurrent ? 5 : 3,
+      pointBackgroundColor: COLORS[fy].line,
+      pointBorderColor: isCurrent ? '#fff' : COLORS[fy].line,
+      pointBorderWidth: isCurrent ? 2 : 0,
+      tension: 0.35,
+      fill: false,
+      spanGaps: false,
+      order: isCurrent ? 0 : 1
+    };
+  });
+}
+
+/* ── Repeat rate datasets (Option B) — FY months ── */
+function makeRepeatDatasets(market, metricKey) {
+  return ['FY24','FY25','FY26'].map(fy => {
+    const data = cleanRepeat(market, metricKey, fy);
+    const isCurrent = (fy === 'FY26');
+    return {
+      label: fy,
+      data: data,
+      borderColor: COLORS[fy].line,
+      backgroundColor: COLORS[fy].fill,
+      borderWidth: WIDTHS[fy],
+      borderDash: DASHES[fy],
+      pointRadius: isCurrent ? 4 : 2.5,
+      pointHoverRadius: isCurrent ? 6 : 4,
+      pointBackgroundColor: COLORS[fy].line,
+      pointBorderColor: isCurrent ? '#fff' : COLORS[fy].line,
+      pointBorderWidth: isCurrent ? 2 : 0,
+      tension: 0.35,
+      fill: false,
+      spanGaps: false,
+      order: isCurrent ? 0 : 1
+    };
+  });
+}
+
+/* ── Currency symbols per market ── */
+const CURRENCY = { USA: '$', UK: '£', AU: 'A$', CA: 'C$', EU: '€' };
+const ALL_MARKETS = ['USA', 'UK', 'AU', 'CA', 'EU'];
+
+/* ── All Markets rollup helpers ── */
+function rollupCustomers(fy) {
+  return ALL_MARKETS.reduce((acc, m) => {
+    const arr = DATA[m].customers[fy];
+    return acc.map((v, i) => v + (arr[i] || 0));
+  }, Array(12).fill(0)).map(v => v === 0 ? null : v);
+}
+
+function rollupRetention(fy) {
+  // Weighted average: sum(pct * cohort_size) / sum(cohort_size) per period
+  const result = Array(25).fill(null);
+  for (let p = 0; p < 25; p++) {
+    let totalWeight = 0, weightedSum = 0;
+    ALL_MARKETS.forEach(m => {
+      const ret = (RETENTION_DATA[m] || {})[fy];
+      if (!ret || ret[p] === null || ret[p] === undefined) return;
+      // Weight by total qualifying customers in that market+FY
+      const cust = DATA[m].customers[fy];
+      const weight = cust.reduce((a, b) => a + (b || 0), 0);
+      if (weight === 0) return;
+      weightedSum += ret[p] * weight;
+      totalWeight += weight;
+    });
+    if (totalWeight > 0) result[p] = Math.round(weightedSum / totalWeight * 100) / 100;
+  }
+  return result;
+}
+
+function rollupRepeat(metricKey, fy) {
+  // Weighted average per FY month, weighted by cohort size
+  return Array.from({length: 12}, (_, i) => {
+    let totalWeight = 0, weightedSum = 0;
+    ALL_MARKETS.forEach(m => {
+      const rep = ((REPEAT_DATA[m] || {})[metricKey] || {})[fy];
+      if (!rep || rep[i] === null || rep[i] === undefined) return;
+      const cohortSize = DATA[m].customers[fy][i] || 0;
+      if (cohortSize < MIN_CUSTOMERS) return;
+      // Apply maturity cutoff
+      const maturityMonths = REPEAT_MATURITY[metricKey] || 0;
+      if (maturityMonths > 0) {
+        const cohortDate = cohortCalendarDate(fy, i);
+        const matureBy = new Date(cohortDate);
+        matureBy.setMonth(matureBy.getMonth() + maturityMonths);
+        if (matureBy > NOW) return;
+      }
+      weightedSum += rep[i] * cohortSize;
+      totalWeight += cohortSize;
+    });
+    return totalWeight > 0 ? Math.round(weightedSum / totalWeight * 10) / 10 : null;
+  });
+}
+
+function makeAllDatasetsCustomers() {
+  return ['FY24','FY25','FY26','FY27'].map(fy => {
+    const data = rollupCustomers(fy);
+    const isCurrent = (fy === 'FY26');
+    return {
+      label: fy, data,
+      borderColor: COLORS[fy].line, backgroundColor: COLORS[fy].fill,
+      borderWidth: WIDTHS[fy], borderDash: DASHES[fy],
+      pointRadius: isCurrent ? 4 : 2.5, pointHoverRadius: isCurrent ? 6 : 4,
+      pointBackgroundColor: COLORS[fy].line,
+      pointBorderColor: isCurrent ? '#fff' : COLORS[fy].line,
+      pointBorderWidth: isCurrent ? 2 : 0,
+      tension: 0.35, fill: false, spanGaps: false, order: isCurrent ? 0 : 1
+    };
+  });
+}
+
+function makeAllRetentionDatasets() {
+  return ['FY24','FY25','FY26'].map(fy => {
+    const data = rollupRetention(fy);
+    const isCurrent = (fy === 'FY26');
+    return {
+      label: fy, data: data.map(v => v === null ? null : v),
+      borderColor: COLORS[fy].line, backgroundColor: COLORS[fy].fill,
+      borderWidth: WIDTHS[fy], borderDash: DASHES[fy],
+      pointRadius: isCurrent ? 3 : 2, pointHoverRadius: isCurrent ? 5 : 3,
+      pointBackgroundColor: COLORS[fy].line,
+      pointBorderColor: isCurrent ? '#fff' : COLORS[fy].line,
+      pointBorderWidth: isCurrent ? 2 : 0,
+      tension: 0.35, fill: false, spanGaps: false, order: isCurrent ? 0 : 1
+    };
+  });
+}
+
+function makeAllRepeatDatasets(metricKey) {
+  return ['FY24','FY25','FY26'].map(fy => {
+    const data = rollupRepeat(metricKey, fy);
+    const isCurrent = (fy === 'FY26');
+    return {
+      label: fy, data,
+      borderColor: COLORS[fy].line, backgroundColor: COLORS[fy].fill,
+      borderWidth: WIDTHS[fy], borderDash: DASHES[fy],
+      pointRadius: isCurrent ? 4 : 2.5, pointHoverRadius: isCurrent ? 6 : 4,
+      pointBackgroundColor: COLORS[fy].line,
+      pointBorderColor: isCurrent ? '#fff' : COLORS[fy].line,
+      pointBorderWidth: isCurrent ? 2 : 0,
+      tension: 0.35, fill: false, spanGaps: false, order: isCurrent ? 0 : 1
+    };
+  });
+}
+
+function makeChart(canvasId, market, metricKey, isCurrency) {
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  const cur = CURRENCY[market];
+  return new Chart(ctx, {
+    type: 'line',
+    data: { labels: MONTHS, datasets: makeDatasets(market, metricKey, isCurrency) },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#006375',
+          titleColor: '#FFFFFF',
+          bodyColor: '#CEEBEE',
+          titleFont: { family: 'Arial, Helvetica, sans-serif', weight: '700', size: 13 },
+          bodyFont: { family: 'Georgia, serif', size: 12 },
+          padding: 14,
+          cornerRadius: 6,
+          displayColors: true,
+          boxPadding: 4,
+          callbacks: {
+            label: function(ctx) {
+              if (ctx.raw === null || ctx.raw === undefined) return null;
+              const val = isCurrency ? cur + ctx.raw.toFixed(2) : ctx.raw.toLocaleString();
+              return ' ' + ctx.dataset.label + ':  ' + val;
+            }
+          },
+          filter: function(item) { return item.raw !== null && item.raw !== undefined; }
+        }
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: {
+            font: { family: 'Arial, Helvetica, sans-serif', size: 12, weight: '700' },
+            color: '#5A6675'
+          }
+        },
+        y: {
+          beginAtZero: !isCurrency,
+          grid: { color: 'rgba(0,99,117,0.06)', drawBorder: false },
+          border: { display: false },
+          ticks: {
+            font: { family: 'Arial, Helvetica, sans-serif', size: 11 },
+            color: '#5A6675',
+            callback: function(val) {
+              return isCurrency ? cur + val.toFixed(0) : val.toLocaleString();
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+/* ── Retention chart (different x-axis: M0–M24) ── */
+const RETENTION_LABELS = Array.from({length: 25}, (_, i) => 'M' + i);
+
+function makeRetentionChart(market) {
+  const ctx = document.getElementById('chartRetention').getContext('2d');
+  return new Chart(ctx, {
+    type: 'line',
+    data: { labels: RETENTION_LABELS, datasets: makeRetentionDatasets(market) },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#006375',
+          titleColor: '#FFFFFF',
+          bodyColor: '#CEEBEE',
+          titleFont: { family: 'Arial, Helvetica, sans-serif', weight: '700', size: 13 },
+          bodyFont: { family: 'Georgia, serif', size: 12 },
+          padding: 14,
+          cornerRadius: 6,
+          displayColors: true,
+          boxPadding: 4,
+          callbacks: {
+            title: function(items) {
+              return items[0].label + ' after first purchase';
+            },
+            label: function(ctx) {
+              if (ctx.raw === null || ctx.raw === undefined) return null;
+              return ' ' + ctx.dataset.label + ':  ' + ctx.raw.toFixed(2) + '%';
+            }
+          },
+          filter: function(item) { return item.raw !== null && item.raw !== undefined; }
+        }
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: {
+            font: { family: 'Arial, Helvetica, sans-serif', size: 11, weight: '700' },
+            color: '#5A6675',
+            maxTicksLimit: 13
+          }
+        },
+        y: {
+          beginAtZero: true,
+          grid: { color: 'rgba(0,99,117,0.06)', drawBorder: false },
+          border: { display: false },
+          ticks: {
+            font: { family: 'Arial, Helvetica, sans-serif', size: 11 },
+            color: '#5A6675',
+            callback: function(val) { return val.toFixed(0) + '%'; }
+          }
+        }
+      }
+    }
+  });
+}
+
+/* ── Repeat rate chart ── */
+function makeRepeatChart(market, metricKey) {
+  const ctx = document.getElementById('chartRepeatRate').getContext('2d');
+  return new Chart(ctx, {
+    type: 'line',
+    data: { labels: MONTHS, datasets: makeRepeatDatasets(market, metricKey) },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#006375',
+          titleColor: '#FFFFFF',
+          bodyColor: '#CEEBEE',
+          titleFont: { family: 'Arial, Helvetica, sans-serif', weight: '700', size: 13 },
+          bodyFont: { family: 'Georgia, serif', size: 12 },
+          padding: 14,
+          cornerRadius: 6,
+          displayColors: true,
+          boxPadding: 4,
+          callbacks: {
+            label: function(ctx) {
+              if (ctx.raw === null || ctx.raw === undefined) return null;
+              return ' ' + ctx.dataset.label + ':  ' + ctx.raw.toFixed(1) + '%';
+            }
+          },
+          filter: function(item) { return item.raw !== null && item.raw !== undefined; }
+        }
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: {
+            font: { family: 'Arial, Helvetica, sans-serif', size: 12, weight: '700' },
+            color: '#5A6675'
+          }
+        },
+        y: {
+          beginAtZero: true,
+          grid: { color: 'rgba(0,99,117,0.06)', drawBorder: false },
+          border: { display: false },
+          ticks: {
+            font: { family: 'Arial, Helvetica, sans-serif', size: 11 },
+            color: '#5A6675',
+            callback: function(val) { return val.toFixed(0) + '%'; }
+          }
+        }
+      }
+    }
+  });
+}
+
+/* ── KPI Summary ── */
+function updateSummary(market) {
+  const d = DATA[market];
+  const cur = CURRENCY[market];
+
+  // Customers: FY26 YTD sum
+  const cust26 = d.customers.FY26.filter(v => v > 0);
+  const custVal = cust26.reduce((a,b) => a+b, 0);
+  const cust25Same = d.customers.FY25.slice(0, cust26.length).filter(v => v > 0);
+  const custCmp = cust25Same.reduce((a,b) => a+b, 0);
+
+  // First Purchase: average of clean FY26 values
+  const fp26 = cleanSpend(market, 'spend0', 'FY26').filter(v => v !== null);
+  const fpVal = fp26.length ? fp26.reduce((a,b) => a+b, 0) / fp26.length : 0;
+  const fp25 = cleanSpend(market, 'spend0', 'FY25').slice(0, fp26.length).filter(v => v !== null);
+  const fpCmp = fp25.length ? fp25.reduce((a,b) => a+b, 0) / fp25.length : 0;
+
+  // Helper: find most recent mature value across FYs (newest first)
+  // Returns { val, fy, idx } or { val: 0 }
+  function latestMature(metric) {
+    const fys = ['FY26','FY25','FY24'];
+    for (const fy of fys) {
+      const clean = cleanSpend(market, metric, fy);
+      for (let i = clean.length - 1; i >= 0; i--) {
+        if (clean[i] !== null) {
+          return { val: clean[i], fy, idx: i };
+        }
+      }
+    }
+    return { val: 0, fy: null, idx: -1 };
+  }
+
+  // Find prior-year comparison at the same month index
+  function priorYearVal(metric, fy, idx) {
+    const prev = fy === 'FY26' ? 'FY25' : fy === 'FY25' ? 'FY24' : null;
+    if (!prev || idx < 0) return 0;
+    const clean = cleanSpend(market, metric, prev);
+    return clean[idx] !== null ? clean[idx] : 0;
+  }
+
+  // 3-Mo Spend: most recent full period value (may fall back to FY25)
+  const s3 = latestMature('spend3');
+  const s3Val = s3.val;
+  const s3Cmp = priorYearVal('spend3', s3.fy, s3.idx);
+
+  // 12-Mo Spend: most recent full period value (may fall back to FY25)
+  const s12 = latestMature('spend12');
+  const s12Val = s12.val;
+  const s12Cmp = priorYearVal('spend12', s12.fy, s12.idx);
+
+  // 12-Mo Repeat Rate: most recent mature value across FYs
+  function latestRepeat(metric) {
+    const fys = ['FY26','FY25','FY24'];
+    for (const fy of fys) {
+      const clean = cleanRepeat(market, metric, fy);
+      for (let i = clean.length - 1; i >= 0; i--) {
+        if (clean[i] !== null) {
+          return { val: clean[i], fy, idx: i };
+        }
+      }
+    }
+    return { val: 0, fy: null, idx: -1 };
+  }
+
+  function priorYearRepeat(metric, fy, idx) {
+    const prev = fy === 'FY26' ? 'FY25' : fy === 'FY25' ? 'FY24' : null;
+    if (!prev || idx < 0) return 0;
+    const clean = cleanRepeat(market, metric, prev);
+    return (clean[idx] !== null) ? clean[idx] : 0;
+  }
+
+  const rr12 = latestRepeat('repeat_12m');
+  const rr12Val = rr12.val;
+  const rr12Cmp = priorYearRepeat('repeat_12m', rr12.fy, rr12.idx);
+
+  const metrics = [
+    { label: 'Customers (FY26 YTD)', val: custVal, cmp: custCmp, isCurrency: false, cmpFy: 'FY25', isPct: false },
+    { label: 'First Purchase (Avg)', val: fpVal, cmp: fpCmp, isCurrency: true, cmpFy: 'FY25', isPct: false },
+    { label: '3-Mo Spend (' + (s3.fy ? MONTHS[s3.idx] + ' ' + s3.fy : 'Latest') + ')', val: s3Val, cmp: s3Cmp, isCurrency: true, cmpFy: s3.fy === 'FY26' ? 'FY25' : s3.fy === 'FY25' ? 'FY24' : '', isPct: false },
+    { label: '12-Mo Spend (' + (s12.fy ? MONTHS[s12.idx] + ' ' + s12.fy : 'Latest') + ')', val: s12Val, cmp: s12Cmp, isCurrency: true, cmpFy: s12.fy === 'FY26' ? 'FY25' : s12.fy === 'FY25' ? 'FY24' : '', isPct: false },
+    { label: '12-Mo Repeat (' + (rr12.fy ? MONTHS[rr12.idx] + ' ' + rr12.fy : 'Latest') + ')', val: rr12Val, cmp: rr12Cmp, isCurrency: false, cmpFy: rr12.fy === 'FY26' ? 'FY25' : rr12.fy === 'FY25' ? 'FY24' : '', isPct: true }
+  ];
+
+  let html = '';
+  metrics.forEach(m => {
+    const pctChange = m.cmp > 0 ? ((m.val - m.cmp) / m.cmp * 100) : 0;
+    const arrow = pctChange >= 0 ? '↑' : '↓';
+    const cls = pctChange >= 0 ? 'up' : 'down';
+    const formatted = m.isPct ? m.val.toFixed(1) + '%' : m.isCurrency ? cur + m.val.toFixed(2) : m.val.toLocaleString();
+
+    html += `<div class="summary-stat">
+      <div class="label">${m.label}</div>
+      <div class="value">${formatted}</div>
+      ${m.cmp > 0 ? `<div class="delta ${cls}">${arrow} ${Math.abs(pctChange).toFixed(1)}% vs ${m.cmpFy || 'FY25'}</div>` : ''}
+    </div>`;
+  });
+
+  document.getElementById('summaryRow').innerHTML = html;
+}
+
+/* ── Chart config registry ── */
+const CHART_CONFIGS = [
+  { id: 'chartCustomers', key: 'customers', currency: false },
+  { id: 'chart0mo', key: 'spend0', currency: true },
+  { id: 'chart3mo', key: 'spend3', currency: true },
+  { id: 'chart6mo', key: 'spend6', currency: true },
+  { id: 'chart12mo', key: 'spend12', currency: true }
+];
+
+/* ── Update repeat chart title when window changes ── */
+const REPEAT_LABELS = { repeat_1m: '1 Month', repeat_3m: '3 Months', repeat_6m: '6 Months', repeat_12m: '12 Months' };
+
+function renderRepeatChart() {
+  const market = document.getElementById('marketPicker').value;
+  const metricKey = document.getElementById('repeatWindowPicker').value;
+  const isAll = (market === 'ALL');
+
+  if (charts.chartRepeatRate) {
+    charts.chartRepeatRate.data.datasets = isAll ? makeAllRepeatDatasets(metricKey) : makeRepeatDatasets(market, metricKey);
+    charts.chartRepeatRate.update('none');
+  } else {
+    charts.chartRepeatRate = makeRepeatChart(isAll ? 'USA' : market, metricKey);
+    if (isAll) {
+      charts.chartRepeatRate.data.datasets = makeAllRepeatDatasets(metricKey);
+      charts.chartRepeatRate.update('none');
+    }
+  }
+}
+
+function render() {
+  const market = document.getElementById('marketPicker').value;
+  const isAll = (market === 'ALL');
+
+  // Toggle visibility of spend-only elements
+  document.querySelectorAll('.spend-only').forEach(el => {
+    el.style.display = isAll ? 'none' : '';
+  });
+
+  if (isAll) {
+    // ── All Markets: customers chart with rollup ──
+    const custCfg = CHART_CONFIGS[0]; // chartCustomers
+    if (charts[custCfg.id]) {
+      charts[custCfg.id].data.datasets = makeAllDatasetsCustomers();
+      charts[custCfg.id].options.scales.y.beginAtZero = true;
+      charts[custCfg.id].options.scales.y.ticks.callback = function(val) { return val.toLocaleString(); };
+      charts[custCfg.id].options.plugins.tooltip.callbacks.label = function(ctx) {
+        if (ctx.raw === null || ctx.raw === undefined) return null;
+        return ' ' + ctx.dataset.label + ':  ' + ctx.raw.toLocaleString();
+      };
+      charts[custCfg.id].update('none');
+    } else {
+      // First render — create with USA then immediately swap datasets
+      charts[custCfg.id] = makeChart(custCfg.id, 'USA', 'customers', false);
+      charts[custCfg.id].data.datasets = makeAllDatasetsCustomers();
+      charts[custCfg.id].update('none');
+    }
+
+    // Retention curve — rollup
+    if (charts.chartRetention) {
+      charts.chartRetention.data.datasets = makeAllRetentionDatasets();
+      charts.chartRetention.update('none');
+    } else {
+      charts.chartRetention = makeRetentionChart('USA');
+      charts.chartRetention.data.datasets = makeAllRetentionDatasets();
+      charts.chartRetention.update('none');
+    }
+
+    // Repeat rate — rollup
+    const metricKey = document.getElementById('repeatWindowPicker').value;
+    if (charts.chartRepeatRate) {
+      charts.chartRepeatRate.data.datasets = makeAllRepeatDatasets(metricKey);
+      charts.chartRepeatRate.update('none');
+    } else {
+      charts.chartRepeatRate = makeRepeatChart('USA', metricKey);
+      charts.chartRepeatRate.data.datasets = makeAllRepeatDatasets(metricKey);
+      charts.chartRepeatRate.update('none');
+    }
+
+    // KPI summary — customers + repeat only
+    updateSummaryAll();
+
+  } else {
+    // ── Single market ──
+    CHART_CONFIGS.forEach(cfg => {
+      if (charts[cfg.id]) {
+        charts[cfg.id].data.datasets = makeDatasets(market, cfg.key, cfg.currency);
+        const cur = CURRENCY[market];
+        charts[cfg.id].options.scales.y.beginAtZero = !cfg.currency;
+        charts[cfg.id].options.scales.y.ticks.callback = function(val) {
+          return cfg.currency ? cur + val.toFixed(0) : val.toLocaleString();
+        };
+        charts[cfg.id].options.plugins.tooltip.callbacks.label = function(ctx) {
+          if (ctx.raw === null || ctx.raw === undefined) return null;
+          const val = cfg.currency ? cur + ctx.raw.toFixed(2) : ctx.raw.toLocaleString();
+          return ' ' + ctx.dataset.label + ':  ' + val;
+        };
+        charts[cfg.id].update('none');
+      } else {
+        charts[cfg.id] = makeChart(cfg.id, market, cfg.key, cfg.currency);
+      }
+    });
+
+    // Retention curve (Option A)
+    if (charts.chartRetention) {
+      charts.chartRetention.data.datasets = makeRetentionDatasets(market);
+      charts.chartRetention.update('none');
+    } else {
+      charts.chartRetention = makeRetentionChart(market);
+    }
+
+    // Repeat rate (Option B)
+    renderRepeatChart();
+
+    updateSummary(market);
+  }
+}
+
+/* ── All Markets KPI Summary — customers + repeat only ── */
+function updateSummaryAll() {
+  // Customers: sum across all markets
+  const cust26 = rollupCustomers('FY26').filter(v => v !== null && v > 0);
+  const custVal = cust26.reduce((a,b) => a+b, 0);
+  const cust25 = rollupCustomers('FY25').slice(0, cust26.length).filter(v => v !== null && v > 0);
+  const custCmp = cust25.reduce((a,b) => a+b, 0);
+
+  // 12-Mo Repeat Rate: weighted average across markets for most recent mature month
+  function latestRepeatAll(metric) {
+    const fys = ['FY26','FY25','FY24'];
+    for (const fy of fys) {
+      const rolled = rollupRepeat(metric, fy);
+      for (let i = rolled.length - 1; i >= 0; i--) {
+        if (rolled[i] !== null) return { val: rolled[i], fy, idx: i };
+      }
+    }
+    return { val: 0, fy: null, idx: -1 };
+  }
+
+  const rr12 = latestRepeatAll('repeat_12m');
+  const rr12Val = rr12.val;
+  // Prior year comparison
+  let rr12Cmp = 0;
+  if (rr12.fy && rr12.idx >= 0) {
+    const prevFy = rr12.fy === 'FY26' ? 'FY25' : rr12.fy === 'FY25' ? 'FY24' : null;
+    if (prevFy) {
+      const prevRolled = rollupRepeat('repeat_12m', prevFy);
+      rr12Cmp = prevRolled[rr12.idx] !== null ? prevRolled[rr12.idx] : 0;
+    }
+  }
+
+  const metrics = [
+    { label: 'Customers (FY26 YTD)', val: custVal, cmp: custCmp, isCurrency: false, cmpFy: 'FY25', isPct: false },
+    { label: '12-Mo Repeat (' + (rr12.fy ? MONTHS[rr12.idx] + ' ' + rr12.fy : 'Latest') + ')', val: rr12Val, cmp: rr12Cmp, isCurrency: false, cmpFy: rr12.fy === 'FY26' ? 'FY25' : rr12.fy === 'FY25' ? 'FY24' : '', isPct: true }
+  ];
+
+  let html = '';
+  metrics.forEach(m => {
+    const pctChange = m.cmp > 0 ? ((m.val - m.cmp) / m.cmp * 100) : 0;
+    const arrow = pctChange >= 0 ? '↑' : '↓';
+    const cls = pctChange >= 0 ? 'up' : 'down';
+    const formatted = m.isPct ? m.val.toFixed(1) + '%' : m.val.toLocaleString();
+
+    html += `<div class="summary-stat">
+      <div class="label">${m.label}</div>
+      <div class="value">${formatted}</div>
+      ${m.cmp > 0 ? `<div class="delta ${cls}">${arrow} ${Math.abs(pctChange).toFixed(1)}% vs ${m.cmpFy || 'FY25'}</div>` : ''}
+    </div>`;
+  });
+
+  document.getElementById('summaryRow').innerHTML = html;
+}
+
+render();
+</script>
+</body>
+</html>
