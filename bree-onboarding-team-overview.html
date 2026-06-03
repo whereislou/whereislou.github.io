@@ -310,6 +310,7 @@
   .freq.high { background: var(--teal-100); color: var(--teal-dark); }
   .freq.med { background: #fef3e2; color: #8a5a1e; }
   .freq.low { background: var(--buff); color: var(--grey); }
+  .freq.leadership { background: #fde8cc; color: #8a5a1e; }
 
   /* Tooltip */
   .tip {
@@ -384,7 +385,7 @@
       <div class="connector"></div>
     </div>
 
-    <div class="team-grid">
+    <div class="team-grid" style="grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));">
       <div class="person-card">
         <div class="name">Patrick (Pat) Elhindi</div>
         <div class="role">Ecommerce Manager</div>
@@ -399,13 +400,6 @@
         <div class="working-pattern">Full-time · In-office</div>
         <span class="tag direct">Direct Report</span>
       </div>
-      <div class="person-card">
-        <div class="name">Katharina (Kat) Woergetter-Brown</div>
-        <div class="role">Digital Expansion Projects Lead (transitioning)</div>
-        <div class="detail">Currently owns the ecom function and will hand over to you. Moving into a new role focused on growth markets, SEO/GEO strategy, digital infrastructure, and governance. Key handover partner.</div>
-        <div class="working-pattern">Mon, Tue, Thu, Fri · No Wednesdays</div>
-        <span class="tag collab">Handover Partner</span>
-      </div>
     </div>
 
     <hr class="divider">
@@ -415,41 +409,70 @@
 
     <div class="team-grid">
       <div class="person-card">
-        <div class="name">Anna Sheremeteva</div>
-        <div class="role">Digital Marketing Manager</div>
-        <div class="detail">Owns paid media acquisition — PPC, paid social, affiliate. Works with BSM (agency). Your landing pages and on-site content directly impact her paid channel performance. Currently on parental leave; Bruna covering.</div>
-        <span class="tag collab">Close Collaborator</span>
-      </div>
-      <div class="person-card">
-        <div class="name">Mareaka Gibbon</div>
-        <div class="role">CRM Specialist</div>
-        <div class="detail">Day-to-day Klaviyo ownership — email/SMS flows, campaigns, segmentation. Your promotional calendar and on-site strategy should align with her lifecycle comms.</div>
-        <div class="working-pattern">Mon, Tue, Thu, Fri · No Wed · Thu WFH</div>
-        <span class="tag collab">Close Collaborator</span>
-      </div>
-      <div class="person-card">
-        <div class="name">Emily Kelly</div>
-        <div class="role">CRM Consultant (Part-time)</div>
-        <div class="detail">Project-based consultant optimising lifetime Klaviyo flows. Scaling down end of June 2026.</div>
-        <div class="working-pattern">Mon, Tue, Thu only</div>
-        <span class="tag collab">Collaborator</span>
+        <div class="name">Katharina (Kat) Woergetter-Brown</div>
+        <div class="role">Digital Expansion Projects Lead (transitioning)</div>
+        <div class="detail">Currently owns the ecom function and will hand over to you. Moving into a new role focused on growth markets, exploration of GEO opportunities, digital infrastructure, and governance. Key handover partner.</div>
+        <div class="working-pattern">Mon, Tue, Thu, Fri · No Wednesdays</div>
+        <span class="tag direct">Handover Partner</span>
       </div>
       <div class="person-card">
         <div class="name">Nicki Dadic</div>
         <div class="role">Head of Customer & Community</div>
-        <div class="detail">Leads CS (Gorgias) and community functions. Her team handles customer feedback that feeds your CRO insights, plus social content that drives on-site traffic.</div>
+        <div class="detail">Leads CS (Gorgias), community functions, and reviews (Yotpo is transitioning to BazaarVoice). Her team handles customer feedback that feeds your CRO insights, plus social content that drives on-site traffic.</div>
         <div class="working-pattern">Full-time · Finishes 2:30pm Wed/Thu/Fri</div>
         <span class="tag collab">Close Collaborator</span>
       </div>
       <div class="person-card">
         <div class="name">Sam Gabell</div>
         <div class="role">Product Owner, Digital</div>
-        <div class="detail">Owns the Shopify tech stack and product roadmap. You'll partner closely on Shopify dev priorities — you hold the commercial brief, Sam manages execution via Dot Collective (dev agency). Based in Perth.</div>
+        <div class="detail">Owns the Shopify tech stack and product roadmap. You hold the commercial brief, Sam manages execution via Scout and Dot Collective (dev agency). Key AI driver in the digital team. Based in Perth and starts at 10am Sydney time.</div>
         <div class="working-pattern">Mon, Tue, Wed, Fri · No Thu (consultancy)</div>
         <span class="tag collab">Key Partner</span>
       </div>
+      <div class="person-card">
+        <div class="name">Mareaka Gibbon</div>
+        <div class="role">CRM Specialist</div>
+        <div class="detail">Day-to-day Klaviyo ownership — email/SMS flows, campaigns, segmentation. Your promotional calendar and on-site strategy should align with her lifecycle comms. Opportunity to collaborate more closely on email cadence, content, landing pages and on site experience.</div>
+        <div class="working-pattern">Mon, Tue, Thu, Fri · No Wed · Thu WFH</div>
+        <span class="tag collab">Close Collaborator</span>
+      </div>
+      <div class="person-card">
+        <div class="name">Bruna Teixeira</div>
+        <div class="role">Digital Marketing Manager</div>
+        <div class="detail">Owns paid media acquisition — PPC, paid social, affiliate. Works with BSM (agency). Your landing pages and on-site content directly impact her paid channel performance. Parental leave cover for Anna Sheremeteva - started 4 weeks before you. Primary contact for digital marketing but please lean on Lou/Sonya/Chloe/BSM to help fill any knowledge gaps.</div>
+        <span class="tag collab">Close Collaborator</span>
+      </div>
     </div>
+
+    <hr class="divider">
+
+    <h2>Other digi folk</h2>
+    <p class="section-intro">Other people within digital with whom you'll regularly work</p>
+
+    <div class="team-grid">
+      <div class="person-card">
+        <div class="name">Elise Chambers</div>
+        <div class="role">Content and Community Specialist</div>
+        <div class="detail">Elise is the content lead for social and community and plays a signficant role in crafting comms - product copy, email, on site content, blogs, SEO, etc. She is also the content lead for the community and drives community engagement on social platforms. Elise reports to Nicki.</div>
+        <span class="tag collab">Key partner</span>
+      </div>
+      <div class="person-card">
+        <div class="name">Kerry Krawchuck</div>
+        <div class="role">Global Customer Service Manager</div>
+        <div class="detail">Kerry leads our team of 4 customer service agents (Alex, Fernanda, Caitlin and Christiana [UK based]). She will be able to tell you what the custoemrs are thinking and feeling at any time. Kerry reports to Nicki.</div>
+        <span class="tag collab">Collaborator</span>
+      </div>
+      <div class="person-card">
+        <div class="name">Emily Kelly</div>
+        <div class="role">CRM Consultant (Part-time)</div>
+        <div class="detail">Project-based consultant working with us since late last year to help supercharge plans to optimising lifetime Klaviyo. Scalig down to 1-2 days per week from July 2026. Emily reports to Lou and works closely with Mareaka.</div>
+        <div class="working-pattern">Mon, Tue, Thu only</div>
+        <span class="tag collab">Collaborator</span>
+      </div>
+    </div>
+
   </div>
+
 
   <!-- SECTION 2: DIGITAL FUNCTIONS -->
   <div id="digital-functions" class="section">
@@ -464,13 +487,13 @@
       </div>
       <div class="function-block peer">
         <h4>🌏 Digital Expansion (Kat)</h4>
-        <p>Global market localisation, digital infrastructure, knowledge/governance/AI, organic SEO/GEO, reporting</p>
+        <p>Horizon 2 and long-term initiatives, global market localisation, digital infrastructure, exploration of GEO opportunities, reporting</p>
         <div class="headcount">1 person: Kat</div>
       </div>
       <div class="function-block peer">
-        <h4>📣 Digital Marketing (Anna)</h4>
+        <h4>📣 Digital Marketing (Bruna)</h4>
         <p>Paid media — Meta, TikTok, Google (via BSM); affiliates (via The Thoughtful Agency)</p>
-        <div class="headcount">1 + agencies: Anna (Bruna covering)</div>
+        <div class="headcount">1 + agencies: Bruna is parental leave cover for Anna — your main contact</div>
       </div>
       <div class="function-block peer">
         <h4>📧 CRM (Mareaka)</h4>
@@ -489,7 +512,7 @@
       </div>
     </div>
 
-    <div class="tip">🔑 <strong>Your key collaboration loops:</strong> You set the commercial priorities → Sam builds them in Shopify → Anna drives traffic to your pages → Mareaka nurtures the customers you convert → Nicki handles their post-purchase experience. Kat handles the international expansion that feeds your multi-market scope.</div>
+    <div class="tip">🔑 <strong>Your key collaboration loops:</strong> You set the commercial priorities → Sam builds them in Shopify → Bruna and BSM drive traffic to your pages → Mareaka nurtures the customers you convert → Nicki handles their post-purchase experience. Kat handles the international expansion that feeds your multi-market scope.</div>
 
     <hr class="divider">
 
@@ -522,8 +545,8 @@
 
   <!-- SECTION 3: CROSS-FUNCTIONAL -->
   <div id="cross-functional" class="section">
-    <h2>Cross-Functional Partners</h2>
-    <p class="section-intro">Beyond the digital team, these are the key people across the business you'll interact with regularly. Grouped by how often you'll likely engage.</p>
+    <h2>Functional Partners</h2>
+    <p class="section-intro">Beyond the digital team, these are the key people across the business you'll interact with regularly. This list is by no means exhaustive and it's inevitable I've forgotten someone important!</p>
 
     <h3>Leadership (Lou's Peers & Above)</h3>
 
@@ -534,7 +557,7 @@
         <div class="title">CEO</div>
         <div class="why">Lou's boss. You'll present in exec forums and he has strong visibility into ecommerce performance. Commercially minded — expects data-backed recommendations.</div>
       </div>
-      <span class="freq med">Monthly</span>
+      <span class="freq leadership">Leadership</span>
     </div>
 
     <div class="interaction-card">
@@ -544,7 +567,7 @@
         <div class="title">CFO</div>
         <div class="why">Budget holder and P&L governance. You'll work with Finance on margin analysis, promotional ROI, and budget allocation. Note: different person from Pat Elhindi on your team!</div>
       </div>
-      <span class="freq med">Monthly</span>
+      <span class="freq leadership">Leadership</span>
     </div>
 
     <h3>Brand & Communications</h3>
@@ -556,7 +579,7 @@
         <div class="title">Head of Brand & Comms</div>
         <div class="why">Major overlap — brand campaigns, creative assets, TikTok Shop content, product launches. Your on-site content strategy needs to align with her brand direction. One of your most important cross-functional relationships.</div>
       </div>
-      <span class="freq high">Weekly</span>
+      <span class="freq leadership">Leadership</span>
     </div>
 
     <div class="interaction-card">
@@ -566,7 +589,6 @@
         <div class="title">Global Senior Marketing Manager</div>
         <div class="why">Creative asset production and Brandfolder admin. Your go-to for campaign creative, product imagery, and ensuring on-site assets are on-brand.</div>
       </div>
-      <span class="freq high">Weekly</span>
     </div>
 
     <div class="interaction-card">
@@ -576,7 +598,24 @@
         <div class="title">Graphic Designer / Canva Admin</div>
         <div class="why">Produces on-site banners, promotional graphics, and design assets. You'll brief him on campaign creative needs.</div>
       </div>
-      <span class="freq med">Fortnightly</span>
+    </div>
+
+    <div class="interaction-card">
+      <div class="icon" style="background: var(--pink); color: var(--teal-dark);">S</div>
+      <div class="info">
+        <div class="name">Saloni</div>
+        <div class="title">Digital Content Creator</div>
+        <div class="why">Digital content creation for brand and social channels.</div>
+      </div>
+    </div>
+
+    <div class="interaction-card">
+      <div class="icon" style="background: var(--pink); color: var(--teal-dark);">C</div>
+      <div class="info">
+        <div class="name">Celine Robertson</div>
+        <div class="title">Social Media Manager & Producer</div>
+        <div class="why">Social media content and production, reports to Sonya.</div>
+      </div>
     </div>
 
     <h3>Product & Planning</h3>
@@ -588,17 +627,48 @@
         <div class="title">Head of Product</div>
         <div class="why">Product roadmap, new launches, and range strategy. You'll partner on launch readiness, product positioning, and range planning for the site.</div>
       </div>
-      <span class="freq high">Weekly</span>
+      <span class="freq leadership">Leadership</span>
+    </div>
+
+    <div class="interaction-card">
+      <div class="icon" style="background: var(--green-pale); color: #2a6b4e;">K</div>
+      <div class="info">
+        <div class="name">Katie</div>
+        <div class="title">Head of Product Design</div>
+        <div class="why">Sets the vision for all LTD products and is the inspiration behind all our product and print designs.</div>
+      </div>
     </div>
 
     <div class="interaction-card">
       <div class="icon" style="background: var(--green-pale); color: #2a6b4e;">N</div>
       <div class="info">
-        <div class="name">Natalie Jordan & Silvia Donini</div>
-        <div class="title">Merchandise Planners</div>
-        <div class="why">Inventory planning, buy quantities, and stock allocation. Critical for ensuring your promotional and trading plans align with available stock across markets.</div>
+        <div class="name">Natalie Jordan, Silvia Donini & Chloe Sidhpura</div>
+        <div class="title">Merchandise Planners (AU, NA, EU)</div>
+        <div class="why">Inventory planning, buy quantities, and stock allocation. Critical for ensuring your promotional and trading plans align with available stock across markets. You'll work weekly with these three.</div>
       </div>
-      <span class="freq high">Weekly</span>
+    </div>
+
+
+    <h3>Production</h3>
+
+
+    <div class="interaction-card">
+      <div class="icon" style="background: var(--green-pale); color: #2a6b4e;">J</div>
+      <div class="info">
+        <div class="name">Joseph Noronha</div>
+        <div class="title">Head of Production</div>
+        <div class="why">Deals with upstream activities — compliance, working with the factories, product creation. Everything from sourcing through to finished goods.</div>
+      </div>
+      <span class="freq leadership">Leadership</span>
+    </div>
+
+    <div class="interaction-card">
+      <div class="icon" style="background: var(--green-pale); color: #2a6b4e;">N</div>
+      <div class="info">
+        <div class="name">Kathryn Lewis</div>
+        <div class="title">Compliance</div>
+        <div class="why">Kathryn is a wealth of knoweledge when it comes to the various compliance and safety consideration by market.</div>
+      </div>
     </div>
 
     <h3>Market Leads</h3>
@@ -610,7 +680,7 @@
         <div class="title">GM North America</div>
         <div class="why">US is a key growth market. You'll partner on US ecom strategy, pricing architecture, promotional calendar, and Amazon coordination (Aaron Glick runs Amazon).</div>
       </div>
-      <span class="freq high">Weekly</span>
+      <span class="freq leadership">Leadership</span>
     </div>
 
     <div class="interaction-card">
@@ -618,9 +688,9 @@
       <div class="info">
         <div class="name">Beth Adebeyo</div>
         <div class="title">Head of EMEA (covering for Ellen Law)</div>
-        <div class="why">UK is the other key growth market. Partner on UK/EU ecom trading, localisation, and promotional strategy. Ellen is on parental leave.</div>
+        <div class="why">UK is the other key growth market. Partner on UK/EU ecom trading, localisation, and promotional strategy. Ellen is on parental leave but will return to AU in a different role next year.</div>
       </div>
-      <span class="freq high">Weekly</span>
+      <span class="freq leadership">Leadership</span>
     </div>
 
     <div class="interaction-card">
@@ -628,9 +698,9 @@
       <div class="info">
         <div class="name">Meagan McNeil</div>
         <div class="title">Head of APAC</div>
-        <div class="why">AU is the mature primary market. Partner on AU-specific trading, wholesale coordination, and APAC distributor strategy.</div>
+        <div class="why">AU is the mature primary market with the biggest wholesale channel Baby Bunting. She also manages the China team and our extensive distributor relationships throughout Asia. Partner on AU-specific trading, wholesale coordination, and APAC distributor strategy.</div>
       </div>
-      <span class="freq med">Fortnightly</span>
+      <span class="freq leadership">Leadership</span>
     </div>
 
     <h3>Technology & Data</h3>
@@ -640,9 +710,26 @@
       <div class="info">
         <div class="name">Akshay Sapra</div>
         <div class="title">Head of Technology & Data</div>
-        <div class="why">Shopify super admin, Power BI / Microsoft Fabric, data infrastructure. Reports to Pat Ward (CFO). Partner on reporting, data pipelines, and any tech integration needs that go beyond Shopify frontend.</div>
+        <div class="why">Shopify super admin / partner, Power BI / Microsoft Fabric, data infrastructure, all things data and technology. Reports to Pat Ward (CFO). Partner on reporting, data pipelines, and any tech integration needs that go beyond Shopify frontend.</div>
       </div>
-      <span class="freq med">Fortnightly</span>
+    </div>
+
+    <div class="interaction-card">
+      <div class="icon" style="background: var(--teal);">B</div>
+      <div class="info">
+        <div class="name">Brian Loe</div>
+        <div class="title">System & Integration Developer</div>
+        <div class="why">Handles most of the integrations — Shopify, Salsify, and other system connections. If something needs to be wired up technically, Brian is your person.</div>
+      </div>
+    </div>
+
+    <div class="interaction-card">
+      <div class="icon" style="background: var(--teal);">S</div>
+      <div class="info">
+        <div class="name">Shaun Lim</div>
+        <div class="title">Data Engineer</div>
+        <div class="why">Manages the data warehouse and data pipelines. The data guy — if you need reporting infrastructure or data extracts, Shaun is involved.</div>
+      </div>
     </div>
 
     <h3>People & Culture</h3>
@@ -654,7 +741,16 @@
         <div class="title">Head of People and Culture</div>
         <div class="why">Your go-to for onboarding logistics, team development, performance frameworks, and any people matters.</div>
       </div>
-      <span class="freq low">As needed</span>
+      <span class="freq leadership">Leadership</span>
+    </div>
+
+    <div class="interaction-card">
+      <div class="icon" style="background: var(--buff); color: var(--grey);">S</div>
+      <div class="info">
+        <div class="name">Shannon</div>
+        <div class="title">People & Culture Coordinator</div>
+        <div class="why">Sarah's replacement. For anything HR related — any support you need, go and speak to her first and she'll be able to help you out.</div>
+      </div>
     </div>
   </div>
 
@@ -668,30 +764,35 @@
         <div class="name">BlueSense Media (BSM)</div>
         <div class="role">Performance Marketing Agency</div>
         <div class="detail">Paid media across AU, UK, US. Key contacts: Ibra (lead strategist), Grace (ad ops — leaving June), Gaby (creative strategist). You'll work with them on landing page strategy and paid channel optimisation.</div>
+        <div class="working-pattern">Owner: Lou (supported by Bruna)</div>
         <span class="tag collab">Agency</span>
       </div>
       <div class="person-card">
         <div class="name">The Thoughtful Agency</div>
         <div class="role">Affiliate Marketing Agency</div>
         <div class="detail">Manages affiliate channel. Key contacts: Alex Rose, Chris Perkins, Justine Yap. Fortnightly catch-up with the team.</div>
+        <div class="working-pattern">Owner: Bruna</div>
         <span class="tag collab">Agency</span>
       </div>
       <div class="person-card">
         <div class="name">StudioHawk</div>
         <div class="role">SEO Agency</div>
         <div class="detail">SEO partner. Key contact: Jack. You'll own this relationship directly — managing them to commercial outcomes is part of your remit.</div>
+        <div class="working-pattern">Owner: Bruna</div>
         <span class="tag collab">Agency</span>
       </div>
       <div class="person-card">
         <div class="name">Dot Collective</div>
         <div class="role">Shopify Dev Agency</div>
-        <div class="detail">Managed by Sam (Product Owner) via Productive. You'll brief commercial requirements → Sam translates to dev specs → Dot builds.</div>
+        <div class="detail">Managed by Sam (Product Owner) via Productive. You'll brief commercial requirements → Sam translates to dev specs → Dot builds. Increasingly using SCOUT (our orchestrator of AI agents) rather than DC.</div>
+        <div class="working-pattern">Owner: Sam</div>
         <span class="tag collab">Agency</span>
       </div>
       <div class="person-card">
         <div class="name">Rank Boosters</div>
         <div class="role">Link Building</div>
-        <div class="detail">Backlink provider. Contacts: Taylor, Mickey Rooney. Supports your SEO strategy.</div>
+        <div class="detail">Backlink provider. Contacts: Taylor, Mickey Rooney. Supports your SEO strategy. Currently handled by Lou ad hoc but likely to move to Bree in future to support offsite SEO strategy.</div>
+        <div class="working-pattern">Owner: TBC</div>
         <span class="tag collab">Supplier</span>
       </div>
     </div>
